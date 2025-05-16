@@ -3,7 +3,7 @@ import { useInfiniteScroll } from '@vueuse/core'
 import { Loader } from 'lucide-vue-next'
 
 const links = ref([])
-const limit = 24
+const limit = 48
 let cursor = ''
 let listComplete = false
 let listError = false
