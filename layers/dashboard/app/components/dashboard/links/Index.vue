@@ -8,7 +8,7 @@ const linksStore = useDashboardLinksStore()
 const links = ref<Link[]>([])
 const listComplete = ref(false)
 const listError = ref(false)
-const limit = 24
+const limit = 48
 let cursor = ''
 
 const countersMap = ref<Record<string, CounterData>>({})
