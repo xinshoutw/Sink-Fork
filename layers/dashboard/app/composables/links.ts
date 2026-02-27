@@ -9,7 +9,7 @@ export interface LinkUpdateEvent {
 }
 
 export const useDashboardLinksStore = defineStore('dashboard-links', () => {
-  const sortBy = ref<'newest' | 'oldest' | 'az' | 'za'>('az')
+  const sortBy = ref<'newest' | 'oldest' | 'az' | 'za'>('newest')
 
   const showLinkEditor = ref(false)
   const editingLink = ref<Record<string, unknown> | null>(null)
