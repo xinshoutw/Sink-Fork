@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { Folder, Inbox } from '@lucide/vue'
 
+// SelectRoot renders no element, so an id passed to it is dropped and every
+// `<label for>` pointing at this picker resolves to nothing. It goes on the
+// trigger, which is the focusable control a label should target.
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<{
   /** Folder ids to hide, along with their subtrees. Used to keep a folder out of its own move list. */
   excludeSubtreeOf?: string
@@ -11,6 +16,8 @@ const props = withDefaults(defineProps<{
 })
 
 const model = defineModel<string | null>({ default: null })
+
+const attrs = useAttrs()
 
 const folders = useDashboardFoldersStore()
 const ROOT_VALUE = '__sink_root__'
@@ -30,7 +37,7 @@ function select(value: unknown) {
 
 <template>
   <Select :model-value="model ?? ROOT_VALUE" :disabled="disabled" @update:model-value="select">
-    <SelectTrigger class="w-full">
+    <SelectTrigger v-bind="attrs" class="w-full">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>

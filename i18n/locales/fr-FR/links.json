@@ -163,7 +163,7 @@
       "create_success": "Dossier créé.",
       "update_success": "Dossier mis à jour.",
       "delete_title": "Supprimer « {name} » ?",
-      "delete_description": "Ses {links} liens passent dans « Sans dossier » et ses {folders} sous-dossiers remontent d’un niveau. Aucun lien n’est supprimé.",
+      "delete_description": "Ses {links} passent dans « Sans dossier » et ses {folders} remontent d’un niveau. Aucun lien n’est supprimé.",
       "delete_success": "Dossier supprimé.",
       "field_label": "Dossier",
       "field_description": "Laissez vide pour garder ce lien sans dossier.",
@@ -172,12 +172,15 @@
       "move_link_description": "Choisissez le dossier de ce lien.",
       "move_link_success": "Lien déplacé.",
       "move_folder_success": "Dossier déplacé.",
-      "header_summary": "{links} liens · {folders} sous-dossiers",
-      "header_uncategorized_summary": "{links} liens hors de tout dossier",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} hors de tout dossier",
       "action_failed": "L’action sur le dossier a échoué.",
       "error_duplicate": "Un dossier portant ce nom existe déjà ici.",
       "error_not_found": "Ce dossier n’existe plus.",
-      "error_invalid_move": "Un dossier ne peut pas être déplacé dans lui-même ou dans l’un de ses sous-dossiers, et l’imbrication est limitée à 8 niveaux."
+      "error_invalid_move": "Un dossier ne peut pas être déplacé dans lui-même ou dans l’un de ses sous-dossiers, et l’imbrication est limitée à 8 niveaux.",
+      "links_count": "aucun lien | {count} lien | {count} liens",
+      "subfolders_count": "aucun sous-dossier | {count} sous-dossier | {count} sous-dossiers",
+      "error_preview_mode": "Le mode aperçu ne peut pas modifier les dossiers."
     }
   }
 }

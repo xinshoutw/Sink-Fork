@@ -92,7 +92,7 @@ const isDragging = computed(() => activeDrag.value?.kind === 'link' && activeDra
 const folderLabel = computed(() => linksStore.folder ? '' : foldersStore.pathLabel(props.link.folderId ?? undefined))
 
 function handleDragStart(event: DragEvent) {
-  startDrag(event, { kind: 'link', slug: props.link.slug })
+  startDrag(event, { kind: 'link', slug: props.link.slug, folderId: props.link.folderId ?? null })
 }
 
 function handleDragEnd() {
@@ -100,13 +100,15 @@ function handleDragEnd() {
 }
 
 function openMoveDialog() {
-  foldersStore.openMoveLinkDialog([props.link.slug])
+  foldersStore.openMoveLinkDialog([props.link.slug], props.link.folderId ?? null)
   editPopoverOpen.value = false
 }
 
 function openFolder() {
+  // Navigates rather than only setting the store: this card also renders on the
+  // analytics detail page, where mutating the store alone does nothing.
   if (props.link.folderId)
-    linksStore.folder = props.link.folderId
+    void foldersStore.openFolder(props.link.folderId)
 }
 
 const { copy, copied } = useClipboard({ source: shortLink.value, copiedDuring: 400 })

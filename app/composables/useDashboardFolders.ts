@@ -1,12 +1,10 @@
 import type { CreateFolderInput, EditFolderInput, Folder, FolderWithCount } from '#shared/schemas/folder'
-import { useStorage } from '@vueuse/core'
+import { useSessionStorage } from '@vueuse/core'
 import { serializeLinksQuery } from '@/utils/dashboard-query'
 
 export interface FolderNode extends FolderWithCount {
   children: FolderNode[]
   depth: number
-  /** Links in this folder and every folder below it. */
-  totalCount: number
 }
 
 interface FolderListResponse {
@@ -20,7 +18,7 @@ interface FolderListResponse {
  */
 function buildTree(flat: FolderWithCount[]): FolderNode[] {
   const nodes = new Map<string, FolderNode>(
-    flat.map(folder => [folder.id, { ...folder, children: [], depth: 0, totalCount: folder.linkCount }]),
+    flat.map(folder => [folder.id, { ...folder, children: [], depth: 0 }]),
   )
 
   const roots: FolderNode[] = []
@@ -32,11 +30,9 @@ function buildTree(flat: FolderWithCount[]): FolderNode[] {
       roots.push(node)
   }
 
-  // Depth top-down, rolled-up counts bottom-up.
-  const assign = (node: FolderNode, depth: number): number => {
+  const assign = (node: FolderNode, depth: number): void => {
     node.depth = depth
-    node.totalCount = node.linkCount + node.children.reduce((sum, child) => sum + assign(child, depth + 1), 0)
-    return node.totalCount
+    node.children.forEach(child => assign(child, depth + 1))
   }
   roots.forEach(root => assign(root, 0))
   return roots
@@ -48,6 +44,7 @@ function flattenTree(nodes: FolderNode[]): FolderNode[] {
 }
 
 const FOLDERS_CACHE_KEY = 'folders'
+export const EXPANDED_STORAGE_KEY = 'sink:dashboard:expanded-folders'
 
 export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
   // Seed from the last response so the tree paints with the sidebar instead of
@@ -60,7 +57,8 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
   let requestGeneration = 0
 
   // Expansion is view state, not data, so it stays local instead of in the URL.
-  const expandedIds = useStorage<string[]>('sink:dashboard:expanded-folders', [])
+  // sessionStorage matches the read cache: per tab, and gone with the session.
+  const expandedIds = useSessionStorage<string[]>(EXPANDED_STORAGE_KEY, [])
 
   const tree = computed(() => buildTree(flat.value))
   const ordered = computed(() => flattenTree(tree.value))
@@ -82,7 +80,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
   })
 
   const totalCount = computed(() =>
-    tree.value.reduce((sum, node) => sum + node.totalCount, 0) + uncategorizedCount.value,
+    flat.value.reduce((sum, folder) => sum + folder.linkCount, 0) + uncategorizedCount.value,
   )
 
   async function fetchFolders() {
@@ -96,6 +94,10 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
       flat.value = data.folders
       uncategorizedCount.value = data.uncategorizedCount
       writeDashboardCache(FOLDERS_CACHE_KEY, data)
+
+      const live = new Set(data.folders.map(folder => folder.id))
+      if (expandedIds.value.some(id => !live.has(id)))
+        expandedIds.value = expandedIds.value.filter(id => live.has(id))
     }
     catch (cause) {
       if (generation !== requestGeneration)
@@ -162,6 +164,14 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     return breadcrumb(candidateId).some(node => node.id === ancestorId && node.id !== candidateId)
   }
 
+  /** 1 for a leaf; how many levels a subtree needs at its destination. */
+  function subtreeHeight(id: string): number {
+    const node = byId.value.get(id)
+    if (!node?.children.length)
+      return 1
+    return 1 + Math.max(...node.children.map(child => subtreeHeight(child.id)))
+  }
+
   async function createFolder(input: CreateFolderInput): Promise<Folder> {
     const folder = await useAPI<Folder>('/api/folder/create', { method: 'POST', body: input })
     await fetchFolders()
@@ -177,6 +187,8 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
   async function deleteFolder(id: string): Promise<void> {
     await useAPI('/api/folder/delete', { method: 'POST', body: { id } })
     await fetchFolders()
+    // The delete re-homes every link inside, so any open list is now stale.
+    useDashboardLinksStore().requestLinksRefresh()
   }
 
   async function moveLinks(slugs: string[], folderId: string | null): Promise<string[]> {
@@ -196,6 +208,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
   const renameTarget = shallowRef<Folder | null>(null)
   const deleteTarget = shallowRef<FolderNode | null>(null)
   const moveLinkSlugs = shallowRef<string[]>([])
+  const moveLinkFolderId = shallowRef<string | null>(null)
   const showMoveLinkDialog = shallowRef(false)
 
   function openCreateDialog(parentId: string | null = null) {
@@ -211,8 +224,10 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     deleteTarget.value = folder
   }
 
-  function openMoveLinkDialog(slugs: string[]) {
+  /** `currentFolderId` preselects the picker so Save is not a destructive default. */
+  function openMoveLinkDialog(slugs: string[], currentFolderId: string | null = null) {
     moveLinkSlugs.value = slugs
+    moveLinkFolderId.value = currentFolderId
     showMoveLinkDialog.value = true
   }
 
@@ -222,6 +237,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     renameTarget,
     deleteTarget,
     moveLinkSlugs,
+    moveLinkFolderId,
     showMoveLinkDialog,
     openCreateDialog,
     openRenameDialog,
@@ -244,6 +260,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     breadcrumb,
     pathLabel,
     isDescendant,
+    subtreeHeight,
     createFolder,
     updateFolder,
     deleteFolder,

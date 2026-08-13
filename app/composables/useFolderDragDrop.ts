@@ -1,7 +1,10 @@
 import { toast } from 'vue-sonner'
+import { MAX_FOLDER_DEPTH } from '#shared/schemas/folder'
 
 export type FolderDragPayload
-  = | { kind: 'link', slug: string }
+  // folderId is carried so dropping a link back where it already is can be
+  // recognised as a no-op instead of issuing a real move.
+  = | { kind: 'link', slug: string, folderId: string | null }
     | { kind: 'folder', id: string }
 
 const LINK_MIME = 'application/x-sink-link'
@@ -48,17 +51,30 @@ export function useFolderDragDrop() {
     const payload = activeDrag.value
     if (!payload)
       return false
-    if (payload.kind === 'link')
-      return true
-    if (targetFolderId === payload.id)
+
+    if (payload.kind === 'link') {
+      // Dropping a link back into its own folder would still fire a move, wiping
+      // the caches and resetting an infinitely scrolled list to page one.
+      return payload.folderId !== targetFolderId
+    }
+
+    if (targetFolderId === payload.id || (targetFolderId && folders.isDescendant(targetFolderId, payload.id)))
       return false
-    return !(targetFolderId && folders.isDescendant(targetFolderId, payload.id))
+
+    // Reject a subtree that cannot fit rather than painting a valid drop ring
+    // and failing with a generic error after the drop.
+    const depth = targetFolderId ? folders.breadcrumb(targetFolderId).length : 0
+    return depth + folders.subtreeHeight(payload.id) <= MAX_FOLDER_DEPTH
   }
 
   function readDrop(event: DragEvent): FolderDragPayload | null {
     const slug = event.dataTransfer?.getData(LINK_MIME)
-    if (slug)
-      return { kind: 'link', slug }
+    if (slug) {
+      // dataTransfer carries the slug only; the source folder comes from the
+      // mirrored payload, which is still set when the drop fires.
+      const source = activeDrag.value
+      return { kind: 'link', slug, folderId: source?.kind === 'link' ? source.folderId : null }
+    }
     const id = event.dataTransfer?.getData(FOLDER_MIME)
     return id ? { kind: 'folder', id } : null
   }
@@ -71,6 +87,8 @@ export function useFolderDragDrop() {
       return null
 
     if (payload.kind === 'link') {
+      if (payload.folderId === targetFolderId)
+        return null
       await folders.moveLinks([payload.slug], targetFolderId)
       return payload
     }
@@ -94,7 +112,8 @@ export function useFolderDragDrop() {
     }
     catch (cause) {
       console.error(cause)
-      toast.error(t('links.folders.action_failed'))
+      // Surfaces the depth and duplicate-name cases the API distinguishes.
+      toast.error(getFolderErrorMessage(cause, t))
     }
   }
 

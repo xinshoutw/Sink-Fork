@@ -54,14 +54,15 @@ export function writeDashboardCache(key: string, value: unknown): void {
   }
 }
 
-export function clearDashboardCache(): void {
+/** Clears our entries, optionally narrowed to those whose key starts with `scope`. */
+export function clearDashboardCache(scope = ''): void {
   const store = storage()
   if (!store)
     return
 
   try {
     for (const key of Object.keys(store)) {
-      if (key.startsWith(PREFIX))
+      if (key.startsWith(PREFIX + scope))
         store.removeItem(key)
     }
   }

@@ -22,6 +22,10 @@ function logOut() {
   const method = authMethod.value || (getAuthToken() ? 'site-token' : 'access-user')
   const shouldLogoutAccess = accessEnabled.value || method === 'access-user' || method === 'access-service'
   removeAuthToken()
+  // Cached list pages and the expanded-folder set outlive the session otherwise,
+  // so the next account signing in on this tab would see the previous one's data.
+  clearDashboardCache()
+  sessionStorage.removeItem(EXPANDED_STORAGE_KEY)
   clearAuthSession()
 
   if (shouldLogoutAccess) {

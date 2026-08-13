@@ -24,7 +24,9 @@ const scrollContainer = shallowRef<HTMLElement | null>(null)
 
 onMounted(() => {
   scrollContainer.value = document.getElementById('dashboard-main')
-  void getLinks()
+  // resetAndLoad, not getLinks: this is the path that paints from the cache, so
+  // a first render and a back-navigation get the same instant list.
+  resetAndLoad()
 })
 
 async function getLinks() {
@@ -161,16 +163,21 @@ function updateLinkList(link: DashboardLink, type: LinkUpdateType) {
 }
 
 linksStore.onLinkUpdate(({ link, type }) => {
+  // Captured first: updateLinkList can switch sortBy to 'newest', and computing
+  // the key afterwards filed the old, differently sorted page under the new sort.
+  const key = cacheKey()
   updateLinkList(link, type)
   // Keep the cache in step so navigating away and back does not briefly show
   // the link as it was before this edit.
-  writeDashboardCache(cacheKey(), links.value.slice(0, limit))
+  if (key === cacheKey())
+    writeDashboardCache(key, links.value.slice(0, limit))
 })
 
 linksStore.onLinksRefresh(() => {
   // A bulk change such as a folder move can touch links on pages this client
-  // never loaded, so every cached page is suspect.
-  clearDashboardCache()
+  // never loaded, so every cached list page is suspect. The folder entry is left
+  // alone: the folders store has just refreshed and rewritten it.
+  clearDashboardCache('links:')
   resetAndLoad()
 })
 </script>

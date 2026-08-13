@@ -163,7 +163,7 @@
       "create_success": "Folder dibuat.",
       "update_success": "Folder diperbarui.",
       "delete_title": "Hapus “{name}”?",
-      "delete_description": "{links} tautan di dalamnya pindah ke “Tanpa folder” dan {folders} subfoldernya naik satu tingkat. Tidak ada tautan yang dihapus.",
+      "delete_description": "{links} di dalamnya pindah ke “Tanpa folder” dan {folders} naik satu tingkat. Tidak ada tautan yang dihapus.",
       "delete_success": "Folder dihapus.",
       "field_label": "Folder",
       "field_description": "Biarkan kosong agar tautan ini tetap tanpa folder.",
@@ -172,12 +172,15 @@
       "move_link_description": "Pilih folder untuk tautan ini.",
       "move_link_success": "Tautan dipindahkan.",
       "move_folder_success": "Folder dipindahkan.",
-      "header_summary": "{links} tautan · {folders} subfolder",
-      "header_uncategorized_summary": "{links} tautan di luar semua folder",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} di luar semua folder",
       "action_failed": "Tindakan folder gagal.",
       "error_duplicate": "Sudah ada folder dengan nama ini di sini.",
       "error_not_found": "Folder itu sudah tidak ada.",
-      "error_invalid_move": "Folder tidak dapat dipindahkan ke dirinya sendiri atau subfoldernya, dan penyusunan bertingkat dibatasi 8 tingkat."
+      "error_invalid_move": "Folder tidak dapat dipindahkan ke dirinya sendiri atau subfoldernya, dan penyusunan bertingkat dibatasi 8 tingkat.",
+      "links_count": "tidak ada tautan | {count} tautan | {count} tautan",
+      "subfolders_count": "tidak ada subfolder | {count} subfolder | {count} subfolder",
+      "error_preview_mode": "Mode pratinjau tidak dapat mengubah folder."
     }
   }
 }

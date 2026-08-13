@@ -163,7 +163,7 @@
       "create_success": "Pasta criada.",
       "update_success": "Pasta atualizada.",
       "delete_title": "Excluir “{name}”?",
-      "delete_description": "Os {links} links vão para “Sem pasta” e as {folders} subpastas sobem um nível. Nenhum link é excluído.",
+      "delete_description": "Os {links} vão para “Sem pasta” e as {folders} sobem um nível. Nenhum link é excluído.",
       "delete_success": "Pasta excluída.",
       "field_label": "Pasta",
       "field_description": "Deixe vazio para manter este link sem pasta.",
@@ -172,12 +172,15 @@
       "move_link_description": "Escolha a pasta deste link.",
       "move_link_success": "Link movido.",
       "move_folder_success": "Pasta movida.",
-      "header_summary": "{links} links · {folders} subpastas",
-      "header_uncategorized_summary": "{links} links fora de qualquer pasta",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} fora de qualquer pasta",
       "action_failed": "A ação na pasta falhou.",
       "error_duplicate": "Já existe uma pasta com este nome aqui.",
       "error_not_found": "Essa pasta não existe mais.",
-      "error_invalid_move": "Uma pasta não pode ser movida para ela mesma nem para uma subpasta dela, e o aninhamento é limitado a 8 níveis."
+      "error_invalid_move": "Uma pasta não pode ser movida para ela mesma nem para uma subpasta dela, e o aninhamento é limitado a 8 níveis.",
+      "links_count": "nenhum link | {count} link | {count} links",
+      "subfolders_count": "nenhuma subpasta | {count} subpasta | {count} subpastas",
+      "error_preview_mode": "O modo de visualização não pode alterar pastas."
     }
   }
 }

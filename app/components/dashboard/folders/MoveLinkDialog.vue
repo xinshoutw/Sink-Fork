@@ -16,9 +16,11 @@ const open = computed({
   },
 })
 
+// Seed with where the link already is, so the primary button is not a
+// destructive default that silently un-files it.
 watch(open, (isOpen) => {
   if (isOpen)
-    target.value = null
+    target.value = folders.moveLinkFolderId
 })
 
 async function submit() {

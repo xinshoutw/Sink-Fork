@@ -23,7 +23,7 @@ export function getFolderErrorMessage(error: unknown, t: Translate): string {
     case 400:
       return t('links.folders.error_invalid_move')
     case 403:
-      return t('links.preview_mode_tip')
+      return t('links.folders.error_preview_mode')
     default:
       return t('links.folders.action_failed')
   }

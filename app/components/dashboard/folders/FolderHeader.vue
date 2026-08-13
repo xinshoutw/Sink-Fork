@@ -8,6 +8,18 @@ const linksStore = useDashboardLinksStore()
 const isUncategorized = computed(() => linksStore.folder === UNCATEGORIZED_FOLDER)
 const trail = computed(() => isUncategorized.value ? [] : folders.breadcrumb(linksStore.folder))
 const current = computed(() => trail.value.at(-1))
+/** Everything above the current folder; the current one is the heading below. */
+const ancestors = computed(() => trail.value.slice(0, -1))
+
+const { t } = useI18n()
+const summary = computed(() => isUncategorized.value
+  ? t('links.folders.header_uncategorized_summary', {
+      links: t('links.folders.links_count', folders.uncategorizedCount),
+    })
+  : t('links.folders.header_summary', {
+      links: t('links.folders.links_count', current.value?.linkCount ?? 0),
+      folders: t('links.folders.subfolders_count', current.value?.children.length ?? 0),
+    }))
 
 // Keep the closing menu from pulling focus back out of the dialog it opened.
 function handleMenuCloseAutoFocus(event: Event) {
@@ -38,7 +50,7 @@ function handleMenuCloseAutoFocus(event: Event) {
 
       <div class="min-w-0 flex-1">
         <nav
-          v-if="trail.length > 1" :aria-label="$t('links.folders.breadcrumb_label')" class="
+          v-if="ancestors.length" :aria-label="$t('links.folders.breadcrumb_label')" class="
             min-w-0
           "
         >
@@ -48,7 +60,7 @@ function handleMenuCloseAutoFocus(event: Event) {
             "
           >
             <li
-              v-for="(node, index) in trail" :key="node.id" class="
+              v-for="(node, index) in ancestors" :key="node.id" class="
                 flex min-w-0 items-center gap-0.5
               "
             >
@@ -58,7 +70,6 @@ function handleMenuCloseAutoFocus(event: Event) {
                 class="size-3 shrink-0"
               />
               <button
-                v-if="index < trail.length - 1"
                 type="button"
                 class="
                   max-w-32 truncate rounded-sm
@@ -66,11 +77,10 @@ function handleMenuCloseAutoFocus(event: Event) {
                   focus-visible:ring-2 focus-visible:ring-ring/50
                   focus-visible:outline-none
                 "
-                @click="linksStore.folder = node.id"
+                @click="folders.openFolder(node.id)"
               >
                 {{ node.name }}
               </button>
-              <span v-else class="sr-only">{{ node.name }}</span>
             </li>
           </ol>
         </nav>
@@ -79,12 +89,7 @@ function handleMenuCloseAutoFocus(event: Event) {
           {{ isUncategorized ? $t('links.folders.uncategorized') : current?.name }}
         </h2>
         <p class="truncate text-xs text-muted-foreground tabular-nums">
-          {{ isUncategorized
-            ? $t('links.folders.header_uncategorized_summary', { links: folders.uncategorizedCount })
-            : $t('links.folders.header_summary', {
-              links: current?.linkCount ?? 0,
-              folders: current?.children.length ?? 0,
-            }) }}
+          {{ summary }}
         </p>
       </div>
 

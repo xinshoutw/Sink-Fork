@@ -50,8 +50,8 @@ async function confirmDelete() {
         </AlertDialogTitle>
         <AlertDialogDescription>
           {{ $t('links.folders.delete_description', {
-            links: target?.linkCount ?? 0,
-            folders: target?.children.length ?? 0,
+            links: $t('links.folders.links_count', target?.linkCount ?? 0),
+            folders: $t('links.folders.subfolders_count', target?.children.length ?? 0),
           }) }}
         </AlertDialogDescription>
       </AlertDialogHeader>

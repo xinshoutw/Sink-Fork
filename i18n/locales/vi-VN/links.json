@@ -163,7 +163,7 @@
       "create_success": "Đã tạo thư mục.",
       "update_success": "Đã cập nhật thư mục.",
       "delete_title": "Xóa “{name}”?",
-      "delete_description": "{links} liên kết bên trong sẽ chuyển sang “Chưa phân loại” và {folders} thư mục con sẽ lên một cấp. Không liên kết nào bị xóa.",
+      "delete_description": "{links} bên trong sẽ chuyển sang “Chưa phân loại” và {folders} sẽ lên một cấp. Không liên kết nào bị xóa.",
       "delete_success": "Đã xóa thư mục.",
       "field_label": "Thư mục",
       "field_description": "Để trống nếu muốn liên kết này chưa phân loại.",
@@ -172,12 +172,15 @@
       "move_link_description": "Chọn thư mục cho liên kết này.",
       "move_link_success": "Đã chuyển liên kết.",
       "move_folder_success": "Đã chuyển thư mục.",
-      "header_summary": "{links} liên kết · {folders} thư mục con",
-      "header_uncategorized_summary": "{links} liên kết không thuộc thư mục nào",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} không thuộc thư mục nào",
       "action_failed": "Thao tác thư mục thất bại.",
       "error_duplicate": "Đã có thư mục trùng tên ở đây.",
       "error_not_found": "Thư mục đó không còn tồn tại.",
-      "error_invalid_move": "Không thể chuyển thư mục vào chính nó hoặc thư mục con của nó, và chỉ lồng tối đa 8 cấp."
+      "error_invalid_move": "Không thể chuyển thư mục vào chính nó hoặc thư mục con của nó, và chỉ lồng tối đa 8 cấp.",
+      "links_count": "{count} liên kết",
+      "subfolders_count": "{count} thư mục con",
+      "error_preview_mode": "Chế độ xem trước không thể thay đổi thư mục."
     }
   }
 }

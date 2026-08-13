@@ -163,7 +163,7 @@
       "create_success": "Cartella creata.",
       "update_success": "Cartella aggiornata.",
       "delete_title": "Eliminare «{name}»?",
-      "delete_description": "I suoi {links} link passano a «Senza cartella» e le sue {folders} sottocartelle salgono di un livello. Nessun link viene eliminato.",
+      "delete_description": "I suoi {links} passano a «Senza cartella» e le sue {folders} salgono di un livello. Nessun link viene eliminato.",
       "delete_success": "Cartella eliminata.",
       "field_label": "Cartella",
       "field_description": "Lascia vuoto per mantenere il link senza cartella.",
@@ -172,12 +172,15 @@
       "move_link_description": "Scegli la cartella in cui mettere questo link.",
       "move_link_success": "Link spostato.",
       "move_folder_success": "Cartella spostata.",
-      "header_summary": "{links} link · {folders} sottocartelle",
-      "header_uncategorized_summary": "{links} link fuori da ogni cartella",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} fuori da ogni cartella",
       "action_failed": "Azione sulla cartella non riuscita.",
       "error_duplicate": "Esiste già una cartella con questo nome.",
       "error_not_found": "Questa cartella non esiste più.",
-      "error_invalid_move": "Una cartella non può essere spostata in se stessa o in una propria sottocartella e l'annidamento è limitato a 8 livelli."
+      "error_invalid_move": "Una cartella non può essere spostata in se stessa o in una propria sottocartella e l'annidamento è limitato a 8 livelli.",
+      "links_count": "nessun link | {count} link | {count} link",
+      "subfolders_count": "nessuna sottocartella | {count} sottocartella | {count} sottocartelle",
+      "error_preview_mode": "La modalità anteprima non può modificare le cartelle."
     }
   }
 }

@@ -163,7 +163,7 @@
       "create_success": "Ordner erstellt.",
       "update_success": "Ordner aktualisiert.",
       "delete_title": "„{name}“ löschen?",
-      "delete_description": "Die {links} Links wandern zu „Ohne Ordner“ und die {folders} Unterordner rücken eine Ebene nach oben. Es wird kein Link gelöscht.",
+      "delete_description": "Die {links} wandern zu „Ohne Ordner“ und die {folders} rücken eine Ebene nach oben. Es wird kein Link gelöscht.",
       "delete_success": "Ordner gelöscht.",
       "field_label": "Ordner",
       "field_description": "Leer lassen, damit dieser Link ohne Ordner bleibt.",
@@ -172,12 +172,15 @@
       "move_link_description": "Wähle den Ordner für diesen Link.",
       "move_link_success": "Link verschoben.",
       "move_folder_success": "Ordner verschoben.",
-      "header_summary": "{links} Links · {folders} Unterordner",
-      "header_uncategorized_summary": "{links} Links außerhalb aller Ordner",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} außerhalb aller Ordner",
       "action_failed": "Ordneraktion fehlgeschlagen.",
       "error_duplicate": "Hier gibt es bereits einen Ordner mit diesem Namen.",
       "error_not_found": "Diesen Ordner gibt es nicht mehr.",
-      "error_invalid_move": "Ein Ordner kann nicht in sich selbst oder einen eigenen Unterordner verschoben werden, und die Verschachtelung ist auf 8 Ebenen begrenzt."
+      "error_invalid_move": "Ein Ordner kann nicht in sich selbst oder einen eigenen Unterordner verschoben werden, und die Verschachtelung ist auf 8 Ebenen begrenzt.",
+      "links_count": "keine Links | {count} Link | {count} Links",
+      "subfolders_count": "keine Unterordner | {count} Unterordner | {count} Unterordner",
+      "error_preview_mode": "Im Vorschaumodus lassen sich Ordner nicht ändern."
     }
   }
 }

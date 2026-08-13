@@ -163,7 +163,7 @@
       "create_success": "文件夹已创建。",
       "update_success": "文件夹已更新。",
       "delete_title": "删除“{name}”？",
-      "delete_description": "其中的 {links} 个链接将移至“未分类”，{folders} 个子文件夹将上移一层。链接本身不会被删除。",
+      "delete_description": "其中的{links}将移至“未分类”，{folders}将上移一层。链接本身不会被删除。",
       "delete_success": "文件夹已删除。",
       "field_label": "文件夹",
       "field_description": "留空则此链接保持未分类。",
@@ -172,12 +172,15 @@
       "move_link_description": "选择此链接所属的文件夹。",
       "move_link_success": "链接已移动。",
       "move_folder_success": "文件夹已移动。",
-      "header_summary": "{links} 个链接 · {folders} 个子文件夹",
-      "header_uncategorized_summary": "{links} 个链接不属于任何文件夹",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links}不属于任何文件夹",
       "action_failed": "文件夹操作失败。",
       "error_duplicate": "此处已存在同名文件夹。",
       "error_not_found": "该文件夹已不存在。",
-      "error_invalid_move": "文件夹不能移动到自身或其子文件夹中，且嵌套最多 8 层。"
+      "error_invalid_move": "文件夹不能移动到自身或其子文件夹中，且嵌套最多 8 层。",
+      "links_count": "{count} 个链接",
+      "subfolders_count": "{count} 个子文件夹",
+      "error_preview_mode": "预览模式无法修改文件夹。"
     }
   }
 }

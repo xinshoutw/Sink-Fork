@@ -163,7 +163,7 @@
       "create_success": "資料夾已建立。",
       "update_success": "資料夾已更新。",
       "delete_title": "刪除「{name}」？",
-      "delete_description": "其中的 {links} 個連結會移到「未分類」，{folders} 個子資料夾會往上移一層。連結本身不會被刪除。",
+      "delete_description": "其中的{links}會移到「未分類」，{folders}會往上移一層。連結本身不會被刪除。",
       "delete_success": "資料夾已刪除。",
       "field_label": "資料夾",
       "field_description": "留空則此連結維持未分類。",
@@ -172,12 +172,15 @@
       "move_link_description": "選擇此連結要放在哪個資料夾。",
       "move_link_success": "連結已移動。",
       "move_folder_success": "資料夾已移動。",
-      "header_summary": "{links} 個連結 · {folders} 個子資料夾",
-      "header_uncategorized_summary": "{links} 個連結不屬於任何資料夾",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links}不屬於任何資料夾",
       "action_failed": "資料夾操作失敗。",
       "error_duplicate": "這裡已經有同名的資料夾。",
       "error_not_found": "該資料夾已不存在。",
-      "error_invalid_move": "資料夾不能移到自己或自己的子資料夾裡，且巢狀最多 8 層。"
+      "error_invalid_move": "資料夾不能移到自己或自己的子資料夾裡，且巢狀最多 8 層。",
+      "links_count": "{count} 個連結",
+      "subfolders_count": "{count} 個子資料夾",
+      "error_preview_mode": "預覽模式無法修改資料夾。"
     }
   }
 }

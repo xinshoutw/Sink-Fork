@@ -163,7 +163,7 @@
       "create_success": "Pasta criada.",
       "update_success": "Pasta atualizada.",
       "delete_title": "Eliminar “{name}”?",
-      "delete_description": "As {links} ligações passam para “Sem pasta” e as {folders} subpastas sobem um nível. Nenhuma ligação é eliminada.",
+      "delete_description": "As {links} passam para “Sem pasta” e as {folders} sobem um nível. Nenhuma ligação é eliminada.",
       "delete_success": "Pasta eliminada.",
       "field_label": "Pasta",
       "field_description": "Deixe vazio para manter esta ligação sem pasta.",
@@ -172,12 +172,15 @@
       "move_link_description": "Escolha a pasta desta ligação.",
       "move_link_success": "Ligação movida.",
       "move_folder_success": "Pasta movida.",
-      "header_summary": "{links} ligações · {folders} subpastas",
-      "header_uncategorized_summary": "{links} ligações fora de qualquer pasta",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} fora de qualquer pasta",
       "action_failed": "A ação sobre a pasta falhou.",
       "error_duplicate": "Já existe aqui uma pasta com este nome.",
       "error_not_found": "Essa pasta já não existe.",
-      "error_invalid_move": "Uma pasta não pode ser movida para si própria nem para uma subpasta sua, e o aninhamento está limitado a 8 níveis."
+      "error_invalid_move": "Uma pasta não pode ser movida para si própria nem para uma subpasta sua, e o aninhamento está limitado a 8 níveis.",
+      "links_count": "nenhuma ligação | {count} ligação | {count} ligações",
+      "subfolders_count": "nenhuma subpasta | {count} subpasta | {count} subpastas",
+      "error_preview_mode": "O modo de pré-visualização não pode alterar pastas."
     }
   }
 }

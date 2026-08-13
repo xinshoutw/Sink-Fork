@@ -163,7 +163,7 @@
       "create_success": "Folder created.",
       "update_success": "Folder updated.",
       "delete_title": "Delete “{name}”?",
-      "delete_description": "Its {links} links move to Uncategorized and its {folders} subfolders move up one level. No link is deleted.",
+      "delete_description": "Its {links} move to Uncategorized and its {folders} move up one level. No link is deleted.",
       "delete_success": "Folder deleted.",
       "field_label": "Folder",
       "field_description": "Leave empty to keep this link uncategorized.",
@@ -172,12 +172,15 @@
       "move_link_description": "Pick the folder this link should live in.",
       "move_link_success": "Link moved.",
       "move_folder_success": "Folder moved.",
-      "header_summary": "{links} links · {folders} subfolders",
-      "header_uncategorized_summary": "{links} links outside every folder",
+      "header_summary": "{links} · {folders}",
+      "header_uncategorized_summary": "{links} outside every folder",
       "action_failed": "Folder action failed.",
       "error_duplicate": "A folder with this name already exists here.",
       "error_not_found": "That folder no longer exists.",
-      "error_invalid_move": "A folder cannot be moved into itself or its own subfolder, and nesting is limited to 8 levels."
+      "error_invalid_move": "A folder cannot be moved into itself or its own subfolder, and nesting is limited to 8 levels.",
+      "links_count": "no links | {count} link | {count} links",
+      "subfolders_count": "no subfolders | {count} subfolder | {count} subfolders",
+      "error_preview_mode": "Preview mode cannot change folders."
     }
   }
 }

@@ -28,17 +28,10 @@ async function handleRootDrop(event: DragEvent) {
   await applyDropWithFeedback(event, null)
 }
 
-// The folder endpoints sit behind the same migration gate as links, so waiting
-// avoids a 423 error state in the sidebar on a store that has not migrated yet.
+// Loading is owned by the dashboard layout: below 768px this tree lives inside
+// a Sheet that stays unmounted until the user opens it, so a fetch started here
+// never ran on mobile and every folder surface came up empty.
 const migration = useLinkMigration()
-
-watch(migration.completed, (completed) => {
-  if (completed)
-    void folders.fetchFolders()
-}, { immediate: true })
-
-// Folder counts shift whenever a link is created, edited or deleted.
-linksStore.onLinkUpdate(() => void folders.fetchFolders())
 </script>
 
 <template>
@@ -69,14 +62,12 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             :is-active="isAllActive"
             :tooltip="$t('links.folders.all_links')"
             class="
-              pr-14 transition-colors
+              pr-14 pl-10 transition-colors
               hover:rounded-4xl
               data-active:rounded-4xl
             "
             @click="folders.openFolder(undefined)"
           >
-            <!-- Same slots as a folder row; only the weight and rule set it apart. -->
-            <span class="size-5 shrink-0" aria-hidden="true" />
             <Layers aria-hidden="true" />
             <span class="truncate font-medium">{{ $t('links.folders.all_links') }}</span>
           </SidebarMenuButton>
@@ -92,7 +83,7 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             :is-active="isUncategorizedActive"
             :tooltip="$t('links.folders.uncategorized')"
             class="
-              pr-14 transition-colors
+              pr-14 pl-10 transition-colors
               hover:rounded-4xl
               data-[drop=true]:bg-sidebar-accent data-[drop=true]:ring-2
               data-[drop=true]:ring-sidebar-ring
@@ -105,8 +96,6 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             @dragover="handleRootDragOver"
             @drop="handleRootDrop"
           >
-            <!-- Same slots as a root folder row: chevron column, icon, label. -->
-            <span class="size-5 shrink-0" aria-hidden="true" />
             <Inbox aria-hidden="true" />
             <span class="truncate">{{ $t('links.folders.uncategorized') }}</span>
           </SidebarMenuButton>
@@ -120,16 +109,6 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
           :key="node.id"
           :node="node"
         />
-
-        <SidebarMenuItem
-          v-if="!folders.visibleNodes.length && !folders.loading" class="
-            px-2 py-1
-          "
-        >
-          <p class="text-xs text-sidebar-foreground/60">
-            {{ $t('links.folders.empty') }}
-          </p>
-        </SidebarMenuItem>
 
         <SidebarMenuItem v-if="folders.loading && !folders.flat.length">
           <SidebarMenuButton disabled>
@@ -145,6 +124,14 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
           <SidebarMenuButton class="text-destructive" @click="folders.fetchFolders()">
             <span class="truncate">{{ $t('common.try_again') }}</span>
           </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem
+          v-else-if="!folders.visibleNodes.length" class="px-2 py-1"
+        >
+          <p class="text-xs text-sidebar-foreground/60">
+            {{ $t('links.folders.empty') }}
+          </p>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroupContent>

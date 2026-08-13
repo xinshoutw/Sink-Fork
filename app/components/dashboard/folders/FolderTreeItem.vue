@@ -18,6 +18,9 @@ const isCurrent = computed(() => linksStore.folder === props.node.id)
 // padding rather than adding to it, so leaving it out would pull depth-0 rows
 // out of line with every other row in the sidebar.
 const indent = computed(() => `calc(0.75rem + ${props.node.depth * 0.875}rem)`)
+// The chevron is a sibling button rather than a child of the row, so the row
+// leaves a gap for it: its own width plus the row's gap-2.
+const contentIndent = computed(() => `calc(${indent.value} + 1.75rem)`)
 
 // Rows are siblings rather than nested, so a drop target never overlaps another.
 // The counter is still needed because dragenter and dragleave also fire for the
@@ -73,13 +76,41 @@ async function handleDrop(event: DragEvent) {
 
 <template>
   <SidebarMenuItem>
+    <!--
+      A real button, and a sibling of the row rather than a child of it. Nesting
+      an interactive element inside the row's <button> is invalid HTML, and as a
+      tabindex=-1 span it was unreachable, so subtrees could not be expanded from
+      the keyboard at all.
+    -->
+    <button
+      v-if="hasChildren"
+      type="button"
+      :aria-label="expanded ? `Collapse ${node.name}` : `Expand ${node.name}`"
+      :aria-expanded="expanded"
+      :style="{ insetInlineStart: indent }"
+      class="
+        absolute top-1/2 z-10 flex size-5 -translate-y-1/2 items-center
+        justify-center rounded-md transition-colors
+        hover:bg-sidebar-border
+        focus-visible:ring-2 focus-visible:ring-sidebar-ring
+        focus-visible:outline-none
+      "
+      @click="toggle"
+    >
+      <ChevronRight
+        class="size-3.5 transition-transform duration-200"
+        :class="expanded && 'rotate-90'"
+        aria-hidden="true"
+      />
+    </button>
+
     <ContextMenu>
       <ContextMenuTrigger as-child>
         <SidebarMenuButton
           :is-active="isCurrent"
           :tooltip="node.name"
           draggable="true"
-          :style="{ paddingInlineStart: indent }"
+          :style="{ paddingInlineStart: contentIndent }"
           class="
             pr-14 transition-colors
             hover:rounded-4xl
@@ -98,30 +129,6 @@ async function handleDrop(event: DragEvent) {
           @dragover="handleDragOver"
           @drop="handleDrop"
         >
-          <!--
-            Both branches are exactly size-5 with no margin, so a folder with
-            children lines up with one without.
-          -->
-          <span
-            v-if="hasChildren"
-            role="button"
-            tabindex="-1"
-            :aria-label="expanded ? `Collapse ${node.name}` : `Expand ${node.name}`"
-            :aria-expanded="expanded"
-            class="
-              flex size-5 shrink-0 items-center justify-center rounded-md
-              transition-colors
-              hover:bg-sidebar-border
-            "
-            @click.stop="toggle"
-          >
-            <ChevronRight
-              class="size-3.5 transition-transform duration-200"
-              :class="expanded && 'rotate-90'"
-              aria-hidden="true"
-            />
-          </span>
-          <span v-else class="size-5 shrink-0" aria-hidden="true" />
           <component :is="expanded && hasChildren ? FolderOpen : Folder" aria-hidden="true" />
           <span class="truncate">{{ node.name }}</span>
         </SidebarMenuButton>
@@ -143,9 +150,13 @@ async function handleDrop(event: DragEvent) {
       </ContextMenuContent>
     </ContextMenu>
 
-    <!-- Sits left of the action button so the two never overlap. -->
+    <!--
+      Direct links only, matching the list this row opens. Showing the rolled-up
+      descendant total badged a parent with N and then opened an empty list.
+      Sits left of the action button so the two never overlap.
+    -->
     <SidebarMenuBadge class="right-8">
-      {{ node.totalCount }}
+      {{ node.linkCount }}
     </SidebarMenuBadge>
 
     <DropdownMenu>

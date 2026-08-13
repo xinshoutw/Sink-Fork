@@ -31,10 +31,6 @@ onMounted(() => {
         <DashboardLinksEditorModal :link="newLinkDefaults" />
       </Teleport>
 
-      <DashboardFoldersFolderFormDialog />
-      <DashboardFoldersFolderDeleteDialog />
-      <DashboardFoldersMoveLinkDialog />
-
       <DashboardFoldersFolderHeader />
       <DashboardLinksFilters />
       <TabsContent value="active">
