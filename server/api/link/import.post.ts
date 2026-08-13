@@ -42,6 +42,20 @@ defineRouteMeta({
                     unsafe: { type: 'boolean', description: 'Mark link as unsafe, showing a warning page before redirect' },
                     geo: { type: 'object', additionalProperties: { type: 'string' }, description: 'Geo-routing rules (country code to URL)' },
                     tags: { type: 'array', items: { type: 'string' }, description: 'Up to 10 normalized link tags, each 1-32 characters' },
+                    folderId: { type: 'string', nullable: true, description: 'Folder id; ignored when the id is not present and not supplied in `folders`' },
+                  },
+                },
+              },
+              folders: {
+                type: 'array',
+                description: 'Folders to restore before the links, keeping their original ids. Existing ids are left untouched.',
+                items: {
+                  type: 'object',
+                  required: ['id', 'name'],
+                  properties: {
+                    id: { type: 'string', description: 'Folder id, referenced by each link\'s folderId' },
+                    name: { type: 'string', description: 'Folder name, 1-64 characters' },
+                    parentId: { type: 'string', nullable: true, description: 'Parent folder id, or null for the root level' },
                   },
                 },
               },
@@ -72,10 +86,13 @@ export default eventHandler(async (event) => {
     failedItems: [],
   }
 
-  // Imported files can reference folders that do not exist here. Those links are
-  // kept and land in the uncategorized root rather than failing the whole import,
-  // and folders are never auto-created from untrusted input.
-  const knownFolderIds = await listFolderIds(event)
+  // Folders are restored first, with their original ids, so the folderId on each
+  // imported link still resolves. Files exported before folders existed carry
+  // none, and links referencing a folder the file never included are kept and
+  // land in the uncategorized root rather than failing the whole import.
+  const knownFolderIds = importData.folders?.length
+    ? await importFolders(event, importData.folders)
+    : await listFolderIds(event)
 
   const chunkSize = 4
   for (let offset = 0; offset < importData.links.length; offset += chunkSize) {

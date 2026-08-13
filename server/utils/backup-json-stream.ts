@@ -1,8 +1,10 @@
+import type { PortableFolder } from '#shared/schemas/folder'
 import type { Link } from '#shared/schemas/link'
 
 interface BackupJsonStreamOptions {
   version: string
   exportedAt: string
+  folders?: PortableFolder[]
 }
 
 export interface BackupJsonStream {
@@ -90,7 +92,10 @@ export function createBackupJsonStream(links: AsyncIterable<Link>, options: Back
           return
         }
 
-        controller.enqueue(encoder.encode(`],"count":${emitted}}`))
+        // Folders close the envelope rather than streaming: the set is small,
+        // bounded, and already in memory before the first link is written.
+        const serializedFolders = JSON.stringify(options.folders ?? [])
+        controller.enqueue(encoder.encode(`],"count":${emitted},"folders":${serializedFolders}}`))
         settled = true
         resolveCount(emitted)
         controller.close()

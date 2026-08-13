@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PortableFolderSchema } from './folder'
 import { ImportLinkSchema } from './link'
 
 export const ImportDataSchema = z.object({
@@ -6,6 +7,8 @@ export const ImportDataSchema = z.object({
   exportedAt: z.string().optional(),
   count: z.number().int().optional(),
   links: z.array(ImportLinkSchema).min(1),
+  // Optional so files exported before folders existed still import.
+  folders: z.array(PortableFolderSchema).max(1000).optional(),
 })
 
 export type ImportData = z.infer<typeof ImportDataSchema>

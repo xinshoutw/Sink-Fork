@@ -41,7 +41,6 @@ export interface LinkFilterOptions {
   url?: string
   tag?: string
   status?: LinkStatus
-  folder?: LinkFolderFilter
 }
 
 export interface SearchLinksOptions extends LinkFilterOptions {
@@ -66,7 +65,7 @@ function getDatabase(event: H3Event) {
   return drizzle(event.context.cloudflare.env.DB)
 }
 
-function activeCondition(now = Math.floor(Date.now() / 1000)) {
+export function activeCondition(now = Math.floor(Date.now() / 1000)) {
   return or(isNull(links.effectiveExpiresAt), gt(links.effectiveExpiresAt, now))
 }
 
@@ -410,7 +409,7 @@ export async function* d1IterateAllLinks(env: Cloudflare.Env): AsyncIterable<Lin
 
 function linkFilterCondition(db: ReturnType<typeof getDatabase>, options: LinkFilterOptions) {
   const status = options.status ?? 'active'
-  const conditions = [statusCondition(status), folderCondition(options.folder)]
+  const conditions = [statusCondition(status)]
   if (options.tag)
     conditions.push(exactTagCondition(db, options.tag))
   if (options.url)

@@ -35,6 +35,9 @@ export default eventHandler(async (event) => {
     exportedAt: new Date().toISOString(),
     count: links.length,
     links,
+    // Only on the first page: folders are not paginated, and repeating them on
+    // every page would bloat a multi-page export.
+    ...(cursor ? {} : { folders: await listPortableFolders(event) }),
     cursor: list.cursor,
     list_complete: list.list_complete,
   }

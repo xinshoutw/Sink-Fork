@@ -4,7 +4,7 @@ import { z } from 'zod'
  * Maximum nesting depth, counted from the root level (a root folder has depth 1).
  * Bounds the ancestor walk used for cycle detection and keeps breadcrumbs readable.
  */
-export const MAX_FOLDER_DEPTH = 8
+export const MAX_FOLDER_DEPTH = 3
 
 export const FolderIdSchema = z.string().trim().min(1).max(26)
 export const FolderNameSchema = z.string().trim().min(1).max(64)
@@ -53,6 +53,15 @@ export interface Folder {
   name: string
   parentId: string | null
 }
+
+/** Folder as it appears in an export or backup file. */
+export const PortableFolderSchema = z.object({
+  id: FolderIdSchema,
+  name: FolderNameSchema,
+  parentId: FolderIdSchema.nullish(),
+})
+
+export type PortableFolder = z.infer<typeof PortableFolderSchema>
 
 export interface FolderWithCount extends Folder {
   /** Links directly inside this folder, excluding subfolders. */

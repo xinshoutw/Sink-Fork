@@ -14,8 +14,10 @@ const editableOptionalLinkFields = [
   'unsafe',
   'geo',
   'tags',
-  'folderId',
 ] as const satisfies readonly (keyof Link)[]
+// folderId is deliberately absent: unlike the fields above it preserves on
+// omission, so a client that never sends it cannot silently un-file a link.
+// Send `null` to clear it.
 
 interface LinkResponse {
   link: Link

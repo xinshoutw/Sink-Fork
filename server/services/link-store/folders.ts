@@ -1,11 +1,12 @@
 import type { H3Event } from 'h3'
-import type { CreateFolderInput, EditFolderInput, Folder, FolderWithCount } from '#shared/schemas/folder'
-import { count, eq, inArray, isNull, sql } from 'drizzle-orm'
+import type { CreateFolderInput, EditFolderInput, Folder, FolderWithCount, PortableFolder } from '#shared/schemas/folder'
+import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
 import { customAlphabet } from 'nanoid'
 import { MAX_FOLDER_DEPTH } from '#shared/schemas/folder'
 import { folders, links } from '../../database/schema'
+import { activeCondition } from './d1'
 
 const newFolderId = customAlphabet('23456789abcdefghjkmnpqrstuvwxyz', 10)
 
@@ -19,6 +20,14 @@ type FolderIndex = Map<string, Folder>
 
 function getDatabase(event: H3Event) {
   return drizzle(event.context.cloudflare.env.DB)
+}
+
+/** Folders in export shape. Takes env directly for the cron backup path, which has no event. */
+export async function d1ListPortableFolders(env: Cloudflare.Env): Promise<PortableFolder[]> {
+  return await drizzle(env.DB)
+    .select({ id: folders.id, name: folders.name, parentId: folders.parentId })
+    .from(folders)
+    .orderBy(sql`${folders.name} collate nocase asc`)
 }
 
 async function loadFolderIndex(db: ReturnType<typeof getDatabase>): Promise<FolderIndex> {
@@ -99,6 +108,11 @@ function assertNameAvailable(index: FolderIndex, name: string, parentId: string 
   }
 }
 
+/**
+ * Counts are restricted to active links because they label a list that defaults
+ * to status=active; counting expired rows here would badge folders that render
+ * as empty when opened.
+ */
 export async function d1ListFolders(event: H3Event): Promise<FolderWithCount[]> {
   return await getDatabase(event)
     .select({
@@ -108,13 +122,21 @@ export async function d1ListFolders(event: H3Event): Promise<FolderWithCount[]> 
       linkCount: count(links.slug),
     })
     .from(folders)
-    .leftJoin(links, eq(links.folderId, folders.id))
+    .leftJoin(links, and(eq(links.folderId, folders.id), activeCondition()))
     .groupBy(folders.id)
     .orderBy(sql`${folders.name} collate nocase asc`)
 }
 
+export async function d1ListFolderIds(event: H3Event): Promise<string[]> {
+  const rows = await getDatabase(event).select({ id: folders.id }).from(folders)
+  return rows.map(row => row.id)
+}
+
 export async function d1CountUncategorizedLinks(event: H3Event): Promise<number> {
-  const [result] = await getDatabase(event).select({ count: count() }).from(links).where(isNull(links.folderId))
+  const [result] = await getDatabase(event)
+    .select({ count: count() })
+    .from(links)
+    .where(and(isNull(links.folderId), activeCondition()))
   return result?.count ?? 0
 }
 
@@ -169,20 +191,32 @@ export async function d1UpdateFolder(event: H3Event, input: EditFolderInput): Pr
  * Subfolders and links are re-homed by the `on delete set null` foreign keys:
  * children move up one level and links return to the uncategorized root.
  */
+/**
+ * Children are re-parented before the folder is dropped, so the delete never
+ * relies on the `on delete set null` foreign key to orphan them first. Both
+ * statements run in one batch: doing them separately left the subtree flattened
+ * to the root with no way back if the second one failed. The `where parent_id`
+ * predicate also keeps this to two bound parameters regardless of how many
+ * subfolders there are.
+ */
 export async function d1DeleteFolder(event: H3Event, id: string): Promise<boolean> {
   const db = getDatabase(event)
-  const parentId = (await db.select({ parentId: folders.parentId }).from(folders).where(eq(folders.id, id)).limit(1))[0]?.parentId
-  // Captured before the delete: afterwards `set null` makes these indistinguishable
-  // from folders that already lived at the root.
-  const childIds = (await db.select({ id: folders.id }).from(folders).where(eq(folders.parentId, id))).map(row => row.id)
-
-  const deleted = await db.delete(folders).where(eq(folders.id, id)).returning({ id: folders.id })
-  if (!deleted.length)
+  const existing = (await db.select({ parentId: folders.parentId }).from(folders).where(eq(folders.id, id)).limit(1))[0]
+  if (!existing)
     return false
 
-  if (parentId && childIds.length)
-    await db.update(folders).set({ parentId }).where(inArray(folders.id, childIds))
+  const [reparented] = await db.batch([
+    db.update(folders).set({ parentId: existing.parentId }).where(eq(folders.parentId, id)),
+    db.delete(folders).where(eq(folders.id, id)).returning({ id: folders.id }),
+  ])
+  void reparented
   return true
+}
+
+/** Slugs whose folder assignment a delete is about to clear, for cache eviction. */
+export async function d1ListFolderLinkSlugs(event: H3Event, id: string): Promise<string[]> {
+  const rows = await getDatabase(event).select({ slug: links.slug }).from(links).where(eq(links.folderId, id))
+  return rows.map(row => row.slug)
 }
 
 export async function d1MoveLinks(event: H3Event, slugs: string[], folderId: string | null): Promise<string[]> {
@@ -193,14 +227,76 @@ export async function d1MoveLinks(event: H3Event, slugs: string[], folderId: str
       throw createError({ status: 404, statusText: 'Folder not found' })
   }
 
-  const moved = await db.update(links)
+  // D1 allows at most 100 bound parameters per statement, and one is spent on
+  // folderId, so slugs are chunked the same way d1.ts chunks its tag lookups.
+  // The chunks share a batch so a partial move cannot be observed.
+  const chunks: string[][] = []
+  for (let offset = 0; offset < slugs.length; offset += 90)
+    chunks.push(slugs.slice(offset, offset + 90))
+
+  if (!chunks.length)
+    return []
+
+  const statements = chunks.map(chunk => db.update(links)
     .set({ folderId })
-    .where(inArray(links.slug, slugs))
-    .returning({ slug: links.slug })
-  return moved.map(row => row.slug)
+    .where(inArray(links.slug, chunk))
+    .returning({ slug: links.slug }))
+  const results = await db.batch(statements as [typeof statements[number], ...typeof statements])
+  return results.flatMap(rows => (rows as { slug: string }[]).map(row => row.slug))
 }
 
 export async function d1FolderExists(event: H3Event, id: string): Promise<boolean> {
   const rows = await getDatabase(event).select({ id: folders.id }).from(folders).where(eq(folders.id, id)).limit(1)
   return rows.length > 0
+}
+
+/**
+ * Restores folders from an export or backup, keeping their original ids so the
+ * folderId on each imported link still resolves.
+ *
+ * Rows are inserted parents-first because the self-referencing foreign key is
+ * checked immediately, and existing ids are left untouched rather than
+ * overwritten, so importing into a populated instance is additive.
+ *
+ * Returns the ids that exist afterwards, for the caller to validate links against.
+ */
+export async function d1ImportFolders(event: H3Event, incoming: PortableFolder[]): Promise<Set<string>> {
+  const db = getDatabase(event)
+  const existing = new Set(await d1ListFolderIds(event))
+  if (!incoming.length)
+    return existing
+
+  const pending = new Map(incoming.filter(folder => !existing.has(folder.id)).map(folder => [folder.id, folder]))
+  const now = Math.floor(Date.now() / 1000)
+  const ordered: PortableFolder[] = []
+
+  // Repeatedly take every folder whose parent is already satisfied. Anything
+  // still left after a pass with no progress is part of a cycle or points at a
+  // parent the file never included, so it is re-homed at the root.
+  const resolved = new Set(existing)
+  while (pending.size) {
+    const ready = [...pending.values()].filter(folder => !folder.parentId || resolved.has(folder.parentId))
+    if (!ready.length) {
+      for (const folder of pending.values())
+        ordered.push({ ...folder, parentId: null })
+      break
+    }
+    for (const folder of ready) {
+      ordered.push(folder)
+      resolved.add(folder.id)
+      pending.delete(folder.id)
+    }
+  }
+
+  for (const folder of ordered) {
+    await db.insert(folders).values({
+      id: folder.id,
+      name: folder.name,
+      parentId: folder.parentId ?? null,
+      createdAt: now,
+      updatedAt: now,
+    }).onConflictDoNothing()
+    existing.add(folder.id)
+  }
+  return existing
 }

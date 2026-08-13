@@ -150,17 +150,17 @@ describe.sequential('/api/folder', () => {
   })
 
   it('rejects moving a subtree that would exceed the depth limit', async () => {
-    // A two-level subtree cannot fit under a parent already at the maximum depth.
-    let deepestId: string | null = null
-    for (let depth = 1; depth <= MAX_FOLDER_DEPTH; depth++) {
-      const folder: Folder = await createFolder(`limit-${depth}-${suffix}`, deepestId)
-      deepestId = folder.id
+    // A two-level subtree cannot fit under a parent one level below the cap.
+    let parentId: string | null = null
+    for (let depth = 1; depth < MAX_FOLDER_DEPTH; depth++) {
+      const folder: Folder = await createFolder(`limit-${depth}-${suffix}`, parentId)
+      parentId = folder.id
     }
 
     const subtreeRoot = await createFolder(`subtree-root-${suffix}`)
     await createFolder(`subtree-leaf-${suffix}`, subtreeRoot.id)
 
-    const response = await putJson('/api/folder/edit', { id: subtreeRoot.id, parentId: deepestId })
+    const response = await putJson('/api/folder/edit', { id: subtreeRoot.id, parentId })
     expect(response.status).toBe(400)
   })
 
@@ -192,6 +192,54 @@ describe.sequential('/api/folder', () => {
     expect((await postJson('/api/folder/delete', { id: parent.id })).status).toBe(204)
 
     expect((await getD1Folder(untouched.id))?.parentId).toBe(null)
+  })
+
+  it('restores exported folders with their original ids and re-homes their links', async () => {
+    const folderId = `imp${suffix}`
+    const childId = `impc${suffix}`
+    const slug = `import-folder-${suffix}`
+    createdFolderIds.push(folderId, childId)
+    createdSlugs.add(slug)
+
+    const response = await postJson('/api/link/import', {
+      version: '1.0',
+      // Child first on purpose: the importer must order parents before children.
+      folders: [
+        { id: childId, name: `imported-child-${suffix}`, parentId: folderId },
+        { id: folderId, name: `imported-${suffix}`, parentId: null },
+      ],
+      links: [{ url: 'https://example.com/imported', slug, folderId: childId }],
+    })
+    expect(response.status).toBe(200)
+
+    expect((await getD1Folder(folderId))?.parentId).toBe(null)
+    expect((await getD1Folder(childId))?.parentId).toBe(folderId)
+    expect((await getD1Link(slug))?.folderId).toBe(childId)
+  })
+
+  it('keeps an imported link whose folder is not in the file, without creating that folder', async () => {
+    const slug = `import-unknown-${suffix}`
+    createdSlugs.add(slug)
+
+    const response = await postJson('/api/link/import', {
+      version: '1.0',
+      links: [{ url: 'https://example.com/orphan', slug, folderId: 'does-not-ex' }],
+    })
+    expect(response.status).toBe(200)
+
+    const link = await getD1Link(slug)
+    expect(link, 'the link itself must survive an unknown folder reference').not.toBe(null)
+    expect(link?.folderId).toBe(null)
+    expect(await getD1Folder('does-not-ex')).toBe(null)
+  })
+
+  it('exports folders alongside links', async () => {
+    const folder = await createFolder(`exported-${suffix}`)
+
+    const response = await fetchWithAuth('/api/link/export')
+    expect(response.status).toBe(200)
+    const data = await response.json<{ folders?: { id: string, name: string }[] }>()
+    expect(data.folders?.some(item => item.id === folder.id), 'export must carry the folder tree').toBe(true)
   })
 
   it('deletes a folder even when a promoted child collides with an existing name', async () => {
@@ -307,6 +355,18 @@ describe.sequential('/api/link folder filtering', () => {
     expect((await getD1Link(slugs[0]!))?.folderId).toBe(null)
   })
 
+  it('moves the schema maximum of 100 links in one request', async () => {
+    const folder = await createFolder(`bulk-max-${suffix}`)
+    const slugs = Array.from({ length: 100 }, (_, index) => `bulk-max-${index}-${suffix}`)
+    for (const slug of slugs)
+      await createLink(slug)
+
+    const response = await putJson('/api/link/move', { slugs, folderId: folder.id })
+    expect(response.status, 'D1 allows only 100 bound parameters per statement').toBe(200)
+    expect((await response.json<{ moved: string[] }>()).moved).toHaveLength(100)
+    expect((await getD1Link(slugs[99]!))?.folderId).toBe(folder.id)
+  })
+
   it('rejects moving links into an unknown folder', async () => {
     const slug = `bulk-unknown-${suffix}`
     await createLink(slug)
@@ -314,15 +374,15 @@ describe.sequential('/api/link folder filtering', () => {
     expect(response.status).toBe(404)
   })
 
-  it('keeps the folder when editing other fields', async () => {
+  it('keeps the folder when the edit body omits folderId entirely', async () => {
     const folder = await createFolder(`edit-keep-${suffix}`)
     const slug = `edit-keep-${suffix}`
     await createLink(slug, folder.id)
 
+    // The documented minimal edit body. It must not un-file the link.
     const response = await putJson('/api/link/edit', {
       url: 'https://example.com/edited',
       slug,
-      folderId: folder.id,
     })
     expect(response.status).toBe(201)
     expect((await getD1Link(slug))?.folderId).toBe(folder.id)

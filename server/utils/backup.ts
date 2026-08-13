@@ -1,6 +1,8 @@
 /// <reference path="../../worker-configuration.d.ts" />
 
+import type { PortableFolder } from '#shared/schemas/folder'
 import type { Link } from '#shared/schemas/link'
+import { d1ListPortableFolders } from '../services/link-store/folders'
 import { readCompletedLinkMigrationMarker } from '../services/link-store/migration'
 import { createBackupJsonStream, uploadBackupParts } from './backup-json-stream'
 import { iterateAllAuthoritativeLinks } from './link-store'
@@ -10,6 +12,7 @@ export interface BackupData {
   exportedAt: string
   count: number
   links: Link[]
+  folders: PortableFolder[]
 }
 
 export type BackupResult
@@ -40,6 +43,9 @@ export async function backupLinksToR2(env: Cloudflare.Env, isManual: boolean = f
   const backupMetadata = {
     version: '1.0',
     exportedAt: now.toISOString(),
+    // Read up front: a restore without these silently flattens every link to
+    // the uncategorized root and still reports success.
+    folders: await d1ListPortableFolders(env),
   }
 
   const timestamp = now.toISOString().replace(/:/g, '-')

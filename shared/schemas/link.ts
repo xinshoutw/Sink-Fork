@@ -1,3 +1,4 @@
+import type { PortableFolder } from './folder'
 import { customAlphabet } from 'nanoid'
 import { z } from 'zod'
 import { LINK_PASSWORD_MASK_PREFIX } from '../utils/link-password'
@@ -112,6 +113,8 @@ export interface ExportData {
   exportedAt: string
   count: number
   links: Link[]
+  /** Present on the first page only; folders are not paginated. */
+  folders?: PortableFolder[]
   cursor?: string
   list_complete: boolean
 }
