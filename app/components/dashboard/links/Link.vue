@@ -132,11 +132,21 @@ function copyLink() {
     <CardContent
       class="flex h-full min-w-0 flex-1 flex-col gap-3"
     >
+      <NuxtLink
+        draggable="false"
+        class="
+          absolute inset-0 z-10 rounded-2xl outline-none
+          focus-visible:ring-3 focus-visible:ring-ring/50
+        "
+        :aria-label="`Analytics for ${link.slug}`"
+        :to="getDashboardLinkDetailLocation(link.slug)"
+      />
+
       <div
         class="flex min-w-0 items-start gap-2"
       >
         <div
-          class="group flex min-w-0 flex-1 cursor-pointer items-center gap-3"
+          class="flex min-w-0 flex-1 items-center gap-3"
         >
           <Avatar>
             <AvatarImage
@@ -164,13 +174,10 @@ function copyLink() {
                       target="_blank"
                       rel="noopener noreferrer"
                       class="
-                        min-w-0 truncate rounded-md leading-5 font-bold
-                        outline-none
-                        group-hover:underline group-hover:underline-offset-4
-                        after:absolute after:inset-0 after:z-10
-                        after:rounded-2xl
-                        focus-visible:after:ring-3
-                        focus-visible:after:ring-ring/50
+                        relative z-20 min-w-0 truncate rounded-md leading-5
+                        font-bold outline-none
+                        hover:underline hover:underline-offset-4
+                        focus-visible:ring-3 focus-visible:ring-ring/50
                       "
                     >
                       <span class="sm:hidden">{{ link.slug }}</span>
@@ -194,10 +201,10 @@ function copyLink() {
                 target="_blank"
                 rel="noopener noreferrer"
                 class="
-                  min-w-0 truncate rounded-md leading-5 font-bold outline-none
-                  group-hover:underline group-hover:underline-offset-4
-                  after:absolute after:inset-0 after:z-10 after:rounded-2xl
-                  focus-visible:after:ring-3 focus-visible:after:ring-ring/50
+                  relative z-20 min-w-0 truncate rounded-md leading-5 font-bold
+                  outline-none
+                  hover:underline hover:underline-offset-4
+                  focus-visible:ring-3 focus-visible:ring-ring/50
                 "
               >
                 <span class="sm:hidden">{{ link.slug }}</span>
