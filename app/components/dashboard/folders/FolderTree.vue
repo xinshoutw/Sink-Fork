@@ -49,6 +49,7 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
   >
     <SidebarGroupLabel>{{ $t('links.folders.group_label') }}</SidebarGroupLabel>
     <SidebarGroupAction
+      class="transition-colors"
       aria-label="Create a new folder"
       :title="$t('links.folders.new')"
       @click="folders.openCreateDialog(null)"
@@ -63,20 +64,24 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             :is-active="isAllActive"
             :tooltip="$t('links.folders.all_links')"
             class="
-              pr-8
+              pr-14 transition-colors
               hover:rounded-4xl
               data-active:rounded-4xl
             "
             @click="linksStore.folder = undefined"
           >
+            <!-- Matches the chevron slot on folder rows so every icon lines up. -->
+            <span class="size-5 shrink-0" aria-hidden="true" />
             <Layers aria-hidden="true" />
             <span class="truncate">{{ $t('links.folders.all_links') }}</span>
           </SidebarMenuButton>
-          <SidebarMenuBadge>{{ folders.totalCount }}</SidebarMenuBadge>
+          <SidebarMenuBadge class="right-8">
+            {{ folders.totalCount }}
+          </SidebarMenuBadge>
         </SidebarMenuItem>
 
         <DashboardFoldersFolderTreeItem
-          v-for="node in folders.tree"
+          v-for="node in folders.visibleNodes"
           :key="node.id"
           :node="node"
         />
@@ -86,7 +91,7 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             :is-active="isUncategorizedActive"
             :tooltip="$t('links.folders.uncategorized')"
             class="
-              pr-8
+              pr-14 transition-colors
               hover:rounded-4xl
               data-[drop=true]:bg-sidebar-accent data-[drop=true]:ring-2
               data-[drop=true]:ring-sidebar-ring
@@ -99,10 +104,13 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             @dragover="handleRootDragOver"
             @drop="handleRootDrop"
           >
+            <span class="size-5 shrink-0" aria-hidden="true" />
             <Inbox aria-hidden="true" />
             <span class="truncate">{{ $t('links.folders.uncategorized') }}</span>
           </SidebarMenuButton>
-          <SidebarMenuBadge>{{ folders.uncategorizedCount }}</SidebarMenuBadge>
+          <SidebarMenuBadge class="right-8">
+            {{ folders.uncategorizedCount }}
+          </SidebarMenuBadge>
         </SidebarMenuItem>
 
         <SidebarMenuItem v-if="folders.loading && !folders.flat.length">

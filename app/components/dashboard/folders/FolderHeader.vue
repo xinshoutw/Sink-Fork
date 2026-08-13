@@ -8,6 +8,12 @@ const linksStore = useDashboardLinksStore()
 const isUncategorized = computed(() => linksStore.folder === UNCATEGORIZED_FOLDER)
 const trail = computed(() => isUncategorized.value ? [] : folders.breadcrumb(linksStore.folder))
 const current = computed(() => trail.value.at(-1))
+
+// Keep the closing menu from pulling focus back out of the dialog it opened.
+function handleMenuCloseAutoFocus(event: Event) {
+  if (folders.deleteTarget || folders.renameTarget || folders.showCreateDialog)
+    event.preventDefault()
+}
 </script>
 
 <template>
@@ -88,7 +94,7 @@ const current = computed(() => trail.value.at(-1))
             <MoreHorizontal aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-48">
+        <DropdownMenuContent align="end" class="w-48" @close-auto-focus="handleMenuCloseAutoFocus">
           <DropdownMenuItem @select="folders.openCreateDialog(current!.id)">
             <FolderPlus class="size-4" aria-hidden="true" />
             {{ $t('links.folders.new_subfolder') }}

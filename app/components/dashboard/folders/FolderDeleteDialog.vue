@@ -59,9 +59,15 @@ async function confirmDelete() {
         <AlertDialogCancel :disabled="deleting">
           {{ $t('common.cancel') }}
         </AlertDialogCancel>
-        <AlertDialogAction
+        <!--
+          A plain Button, not AlertDialogAction: the latter closes the dialog from
+          its own click handler, tearing this component down before the request
+          finishes and losing the pending state. Same reason as links/Delete.vue.
+        -->
+        <Button
           variant="destructive"
           :disabled="deleting"
+          :aria-busy="deleting"
           @click.prevent="confirmDelete"
         >
           <LoaderCircle
@@ -70,7 +76,7 @@ async function confirmDelete() {
             aria-hidden="true"
           />
           {{ $t('common.delete') }}
-        </AlertDialogAction>
+        </Button>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

@@ -60,6 +60,21 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
   const ordered = computed(() => flattenTree(tree.value))
   const byId = computed(() => new Map(ordered.value.map(node => [node.id, node])))
 
+  /**
+   * Rows to render, in tree order. The sidebar draws the tree as equal-width
+   * rows indented by depth rather than nested lists, so every row shares one
+   * right edge and the counts and action buttons line up down the column.
+   */
+  const visibleNodes = computed(() => {
+    const hidden = new Set<string>()
+    return ordered.value.filter((node) => {
+      const parentHidden = Boolean(node.parentId && hidden.has(node.parentId))
+      if (parentHidden || (node.parentId && !isExpanded(node.parentId)))
+        hidden.add(node.id)
+      return !parentHidden && (!node.parentId || isExpanded(node.parentId))
+    })
+  })
+
   const totalCount = computed(() =>
     tree.value.reduce((sum, node) => sum + node.totalCount, 0) + uncategorizedCount.value,
   )
@@ -187,6 +202,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     flat,
     tree,
     ordered,
+    visibleNodes,
     byId,
     uncategorizedCount,
     totalCount,
