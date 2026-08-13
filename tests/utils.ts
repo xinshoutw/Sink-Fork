@@ -3,7 +3,7 @@ import { env, exports } from 'cloudflare:workers'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { expect } from 'vitest'
-import { linkMigrationRuns, links, linkTombstones } from '../server/database/schema'
+import { folders, linkMigrationRuns, links, linkTombstones } from '../server/database/schema'
 import { LINK_PASSWORD_HASH_PREFIX, LINK_PASSWORD_MASK_PREFIX } from '../shared/utils/link-password'
 
 export const db = drizzle(env.DB)
@@ -60,6 +60,17 @@ export async function deleteStoredLink(slug: string) {
 
 export async function deleteStoredLinks(slugs: string[]) {
   await Promise.all(slugs.map(slug => deleteStoredLink(slug)))
+}
+
+export async function getD1Folder(id: string) {
+  const [folder] = await db.select().from(folders).where(eq(folders.id, id)).limit(1)
+  return folder ?? null
+}
+
+/** Deletes children before parents so the self-referencing foreign key stays satisfied. */
+export async function deleteStoredFolders(ids: string[]) {
+  for (const id of [...ids].reverse())
+    await db.delete(folders).where(eq(folders.id, id))
 }
 
 export async function clearLinkMigrationState() {

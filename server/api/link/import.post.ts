@@ -72,6 +72,11 @@ export default eventHandler(async (event) => {
     failedItems: [],
   }
 
+  // Imported files can reference folders that do not exist here. Those links are
+  // kept and land in the uncategorized root rather than failing the whole import,
+  // and folders are never auto-created from untrusted input.
+  const knownFolderIds = await listFolderIds(event)
+
   const chunkSize = 4
   for (let offset = 0; offset < importData.links.length; offset += chunkSize) {
     const chunk = importData.links.slice(offset, offset + chunkSize)
@@ -87,6 +92,7 @@ export default eventHandler(async (event) => {
           slug,
           createdAt: linkData.createdAt ?? now,
           updatedAt: linkData.updatedAt ?? now,
+          folderId: linkData.folderId && knownFolderIds.has(linkData.folderId) ? linkData.folderId : null,
         }
         if (link.password)
           link.password = await normalizeLinkPasswordForStorage(link.password)

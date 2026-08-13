@@ -55,6 +55,8 @@ export default eventHandler(async (event) => {
     })
   }
 
+  await assertLinkFolderExists(event, link)
+
   if (link.url !== existingLink.url)
     await detectUnsafeLink(event, link)
 

@@ -18,12 +18,16 @@ export interface ExpectedLinkVersion {
   updatedAt: number
 }
 
+/** `undefined` means no folder filter, `null` means uncategorized links only. */
+export type LinkFolderFilter = string | null | undefined
+
 export interface ListLinksOptions {
   limit: number
   cursor?: string
   sort?: LinkSortBy
   tag?: string
   status?: LinkStatus
+  folder?: LinkFolderFilter
 }
 
 export interface ListLinksResult {
@@ -37,6 +41,7 @@ export interface LinkFilterOptions {
   url?: string
   tag?: string
   status?: LinkStatus
+  folder?: LinkFolderFilter
 }
 
 export interface SearchLinksOptions extends LinkFilterOptions {
@@ -49,6 +54,7 @@ interface D1Cursor {
   createdAt?: number
   tag?: string
   status: LinkStatus
+  folder?: LinkFolderFilter
 }
 
 function withoutQuery(url: string): string {
@@ -70,6 +76,12 @@ function statusCondition(status: LinkStatus, now = Math.floor(Date.now() / 1000)
   if (status === 'expired')
     return and(isNotNull(links.effectiveExpiresAt), lte(links.effectiveExpiresAt, now))
   return undefined
+}
+
+function folderCondition(folder: LinkFolderFilter) {
+  if (folder === undefined)
+    return undefined
+  return folder === null ? isNull(links.folderId) : eq(links.folderId, folder)
 }
 
 function exactTagCondition(db: ReturnType<typeof getDatabase>, tag: string | undefined) {
@@ -103,6 +115,7 @@ function rowToLink(row: LinkRow): Link {
     'password',
     'unsafe',
     'geo',
+    'folderId',
   ] as const
 
   for (const field of optionalFields) {
@@ -152,6 +165,7 @@ export function buildD1LinkValues(event: H3Event, link: Link, effectiveExpiresAt
     password: link.password ?? null,
     unsafe: link.unsafe ?? null,
     geo: link.geo ?? null,
+    folderId: link.folderId ?? null,
     normalizedUrl: withoutQuery(link.url),
     effectiveExpiresAt: effectiveExpiresAt === undefined ? getExpiration(event, link.expiration) ?? null : effectiveExpiresAt,
   }
@@ -307,14 +321,16 @@ function encodeCursor(cursor: D1Cursor): string {
   return `${D1_CURSOR_PREFIX}${btoa(JSON.stringify(cursor))}`
 }
 
-function decodeCursor(cursor: string | undefined, sort: LinkSortBy, tag: string | undefined, status: LinkStatus): D1Cursor | undefined {
+function decodeCursor(cursor: string | undefined, sort: LinkSortBy, tag: string | undefined, status: LinkStatus, folder: LinkFolderFilter): D1Cursor | undefined {
   if (!cursor)
     return undefined
   if (!cursor.startsWith(D1_CURSOR_PREFIX))
     throw createError({ status: 400, statusText: 'Invalid pagination cursor' })
   try {
     const decoded = JSON.parse(atob(cursor.slice(D1_CURSOR_PREFIX.length))) as D1Cursor
-    if (decoded.sort !== sort || decoded.tag !== tag || decoded.status !== status || typeof decoded.slug !== 'string')
+    // `undefined` (no filter) and `null` (uncategorized) survive the JSON round trip
+    // as a missing key and an explicit null, so they stay distinguishable here.
+    if (decoded.sort !== sort || decoded.tag !== tag || decoded.status !== status || decoded.folder !== folder || typeof decoded.slug !== 'string')
       throw new Error('Cursor does not match sort')
     if ((sort === 'newest' || sort === 'oldest') && typeof decoded.createdAt !== 'number')
       throw new Error('Cursor is missing creation time')
@@ -329,7 +345,7 @@ export async function d1ListLinks(event: H3Event, options: ListLinksOptions): Pr
   const db = getDatabase(event)
   const sort = options.sort ?? 'newest'
   const status = options.status ?? 'active'
-  const cursor = decodeCursor(options.cursor, sort, options.tag, status)
+  const cursor = decodeCursor(options.cursor, sort, options.tag, status, options.folder)
   let cursorCondition
   let order
 
@@ -351,14 +367,14 @@ export async function d1ListLinks(event: H3Event, options: ListLinksOptions): Pr
   }
 
   const tagCondition = exactTagCondition(db, options.tag)
-  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, cursorCondition)).orderBy(...order).limit(options.limit + 1)
+  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, folderCondition(options.folder), cursorCondition)).orderBy(...order).limit(options.limit + 1)
   const hasMore = rows.length > options.limit
   const page = hasMore ? rows.slice(0, options.limit) : rows
   const last = page.at(-1)
   return {
     links: await rowsToLinks(event, page),
     list_complete: !hasMore,
-    cursor: hasMore && last ? encodeCursor({ sort, slug: last.slug, createdAt: last.createdAt, tag: options.tag, status }) : undefined,
+    cursor: hasMore && last ? encodeCursor({ sort, slug: last.slug, createdAt: last.createdAt, tag: options.tag, status, folder: options.folder }) : undefined,
   }
 }
 
@@ -394,7 +410,7 @@ export async function* d1IterateAllLinks(env: Cloudflare.Env): AsyncIterable<Lin
 
 function linkFilterCondition(db: ReturnType<typeof getDatabase>, options: LinkFilterOptions) {
   const status = options.status ?? 'active'
-  const conditions = [statusCondition(status)]
+  const conditions = [statusCondition(status), folderCondition(options.folder)]
   if (options.tag)
     conditions.push(exactTagCondition(db, options.tag))
   if (options.url)

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { FolderFilterSchema } from '#shared/schemas/folder'
 
 defineRouteMeta({
   openAPI: {
@@ -40,6 +41,13 @@ defineRouteMeta({
         schema: { type: 'string', enum: ['active', 'expired', 'all'], default: 'active' },
         description: 'Expiration status filter',
       },
+      {
+        name: 'folder',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+        description: 'Folder id to list, or "none" for links that are not in any folder. Omit to list every folder.',
+      },
     ],
   },
 })
@@ -50,12 +58,13 @@ const ListQuerySchema = z.object({
   sort: z.enum(['az', 'za', 'newest', 'oldest']).default('newest'),
   tag: z.string().trim().toLowerCase().min(1).max(32).optional(),
   status: z.enum(['active', 'expired', 'all']).default('active'),
+  folder: FolderFilterSchema,
 })
 
 export default eventHandler(async (event) => {
-  const { limit, cursor, sort, tag, status } = await getValidatedQuery(event, ListQuerySchema.parse)
+  const { limit, cursor, sort, tag, status, folder } = await getValidatedQuery(event, ListQuerySchema.parse)
 
-  const list = await listLinks(event, { limit, cursor, sort, tag, status })
+  const list = await listLinks(event, { limit, cursor, sort, tag, status, folder })
   return {
     ...list,
     links: sanitizeLinksPassword(list.links),

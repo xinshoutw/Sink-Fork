@@ -14,6 +14,7 @@ const editableOptionalLinkFields = [
   'unsafe',
   'geo',
   'tags',
+  'folderId',
 ] as const satisfies readonly (keyof Link)[]
 
 interface LinkResponse {
@@ -23,7 +24,17 @@ interface LinkResponse {
 
 export async function prepareIncomingLink(event: H3Event, link: Link): Promise<void> {
   link.slug = normalizeSlug(event, link.slug)
+  await assertLinkFolderExists(event, link)
   await detectUnsafeLink(event, link)
+}
+
+/**
+ * Checked up front so an unknown folder returns 404 instead of surfacing as a
+ * raw foreign key failure from D1.
+ */
+export async function assertLinkFolderExists(event: H3Event, link: Pick<Link, 'folderId'>): Promise<void> {
+  if (link.folderId && !await folderExists(event, link.folderId))
+    throw createError({ status: 404, statusText: 'Folder not found' })
 }
 
 export async function detectUnsafeLink(event: H3Event, link: Pick<Link, 'url' | 'unsafe'>): Promise<void> {

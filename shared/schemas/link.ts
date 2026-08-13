@@ -1,6 +1,7 @@
 import { customAlphabet } from 'nanoid'
 import { z } from 'zod'
 import { LINK_PASSWORD_MASK_PREFIX } from '../utils/link-password'
+import { FolderIdSchema } from './folder'
 
 const { slugRegex } = useAppConfig()
 
@@ -58,6 +59,8 @@ const LinkFieldsSchema = z.object({
   unsafe: z.boolean().optional(),
   geo: GeoSchema.optional(),
   tags: TagsSchema,
+  // null clears the folder, undefined means the field was not supplied.
+  folderId: FolderIdSchema.nullish(),
 })
 
 export const CreateLinkSchema = LinkFieldsSchema.extend({
