@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "99c0ced3-4e04-4582-a286-b9384ffdd7dc",
+  "id": "74cf6107-48fc-45dd-9ddc-4b239f385e1b",
   "prevId": "11db33bb-f67f-4ad5-8d56-327ab58540db",
   "tables": {
     "folders": {
@@ -44,14 +44,6 @@
         }
       },
       "indexes": {
-        "folders_parent_name_idx": {
-          "name": "folders_parent_name_idx",
-          "columns": [
-            "coalesce(\"parent_id\", '')",
-            "name"
-          ],
-          "isUnique": true
-        },
         "folders_parent_id_idx": {
           "name": "folders_parent_id_idx",
           "columns": [
@@ -498,13 +490,6 @@
   },
   "internal": {
     "indexes": {
-      "folders_parent_name_idx": {
-        "columns": {
-          "coalesce(\"parent_id\", '')": {
-            "isExpression": true
-          }
-        }
-      },
       "link_migration_runs_status_updated_at_desc_created_at_desc_id_desc_idx": {
         "columns": {
           "\"updated_at\" desc": {

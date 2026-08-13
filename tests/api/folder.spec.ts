@@ -194,6 +194,23 @@ describe.sequential('/api/folder', () => {
     expect((await getD1Folder(untouched.id))?.parentId).toBe(null)
   })
 
+  it('deletes a folder even when a promoted child collides with an existing name', async () => {
+    // Regression: a unique index on (parent, name) used to abort the whole
+    // delete because the promoted child landed next to a same-named folder.
+    const collidingName = `collide-${suffix}`
+    await createFolder(collidingName)
+    const parent = await createFolder(`collide-parent-${suffix}`)
+    const child = await createFolder(collidingName, parent.id)
+    const slug = `collide-link-${suffix}`
+    await createLink(slug, parent.id)
+
+    expect((await postJson('/api/folder/delete', { id: parent.id })).status).toBe(204)
+
+    expect(await getD1Folder(parent.id)).toBe(null)
+    expect((await getD1Folder(child.id))?.parentId).toBe(null)
+    expect((await getD1Link(slug))?.folderId).toBe(null)
+  })
+
   it('returns 404 when deleting an unknown folder', async () => {
     const response = await postJson('/api/folder/delete', { id: 'does-not-ex' })
     expect(response.status).toBe(404)

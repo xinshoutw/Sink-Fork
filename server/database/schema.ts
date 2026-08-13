@@ -1,7 +1,7 @@
 import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
 import type { Link } from '../../shared/schemas/link'
 import { sql } from 'drizzle-orm'
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const folders = sqliteTable('folders', {
   id: text().primaryKey(),
@@ -11,9 +11,11 @@ export const folders = sqliteTable('folders', {
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 }, table => [
-  // coalesce because SQLite unique indexes treat every NULL as distinct,
-  // which would otherwise allow duplicate names at the root level.
-  uniqueIndex('folders_parent_name_idx').on(sql`coalesce(${table.parentId}, '')`, table.name),
+  // Deliberately no unique index on (parent, name). Deleting a folder promotes
+  // its children one level up, where a same-named folder may already exist; a
+  // hard constraint would fail the whole delete instead. Sibling names are kept
+  // unique for user-initiated creates and renames in `link-store/folders.ts`,
+  // so the only way to end up with duplicates is that promotion.
   index('folders_parent_id_idx').on(table.parentId),
 ])
 

@@ -83,29 +83,20 @@ function assertDepth(depth: number): void {
 }
 
 /**
- * Names are compared exactly, matching the BINARY collation of the
- * `folders_parent_name_idx` unique index.
+ * Sibling names are unique for anything the user asks for directly. This is not
+ * backed by a database constraint on purpose: deleting a folder promotes its
+ * children one level up, and a constraint would abort that delete whenever a
+ * promoted child collided with an existing folder.
+ *
+ * Names are compared exactly, so casing distinguishes them.
+ * ponytail: last-writer-wins on a concurrent create; the worst case is two
+ * folders sharing a name, which the user can rename.
  */
 function assertNameAvailable(index: FolderIndex, name: string, parentId: string | null, exceptId?: string): void {
   for (const folder of index.values()) {
     if (folder.id !== exceptId && folder.parentId === parentId && folder.name === name)
       throw createError({ status: 409, statusText: 'A folder with this name already exists here' })
   }
-}
-
-/**
- * Backstop for the race between the in-memory check and the insert. Drizzle wraps
- * the D1 failure in a "Failed query" error, so the constraint text only shows up
- * further down the cause chain.
- */
-function isUniqueViolation(error: unknown): boolean {
-  let current: unknown = error
-  for (let depth = 0; current instanceof Error && depth < 5; depth++) {
-    if (/unique|constraint/i.test(current.message))
-      return true
-    current = current.cause
-  }
-  return false
 }
 
 export async function d1ListFolders(event: H3Event): Promise<FolderWithCount[]> {
@@ -140,14 +131,7 @@ export async function d1CreateFolder(event: H3Event, input: CreateFolderInput): 
     name: input.name,
     parentId: input.parentId ?? null,
   }
-  try {
-    await db.insert(folders).values({ ...folder, createdAt: now, updatedAt: now })
-  }
-  catch (error) {
-    if (isUniqueViolation(error))
-      throw createError({ status: 409, statusText: 'A folder with this name already exists here' })
-    throw error
-  }
+  await db.insert(folders).values({ ...folder, createdAt: now, updatedAt: now })
   return folder
 }
 
@@ -175,16 +159,9 @@ export async function d1UpdateFolder(event: H3Event, input: EditFolderInput): Pr
   }
   assertNameAvailable(index, next.name, next.parentId, next.id)
 
-  try {
-    await db.update(folders)
-      .set({ name: next.name, parentId: next.parentId, updatedAt: Math.floor(Date.now() / 1000) })
-      .where(eq(folders.id, input.id))
-  }
-  catch (error) {
-    if (isUniqueViolation(error))
-      throw createError({ status: 409, statusText: 'A folder with this name already exists here' })
-    throw error
-  }
+  await db.update(folders)
+    .set({ name: next.name, parentId: next.parentId, updatedAt: Math.floor(Date.now() / 1000) })
+    .where(eq(folders.id, input.id))
   return next
 }
 

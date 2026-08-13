@@ -28,16 +28,25 @@ async function handleRootDrop(event: DragEvent) {
   await applyDropWithFeedback(event, null)
 }
 
-onMounted(() => {
-  void folders.fetchFolders()
-})
+// The folder endpoints sit behind the same migration gate as links, so waiting
+// avoids a 423 error state in the sidebar on a store that has not migrated yet.
+const migration = useLinkMigration()
+
+watch(migration.completed, (completed) => {
+  if (completed)
+    void folders.fetchFolders()
+}, { immediate: true })
 
 // Folder counts shift whenever a link is created, edited or deleted.
 linksStore.onLinkUpdate(() => void folders.fetchFolders())
 </script>
 
 <template>
-  <SidebarGroup class="group-data-[collapsible=icon]:hidden">
+  <SidebarGroup
+    v-if="migration.completed.value" class="
+      group-data-[collapsible=icon]:hidden
+    "
+  >
     <SidebarGroupLabel>{{ $t('links.folders.group_label') }}</SidebarGroupLabel>
     <SidebarGroupAction
       aria-label="Create a new folder"
