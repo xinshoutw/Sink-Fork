@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import type { DashboardLink } from '@/types/dashboard-links'
-import { CalendarPlus2, Copy, CopyCheck, Ellipsis, Eraser, Flame, Hourglass, Link as LinkIcon, MousePointerClick, QrCode, ShieldAlert, SquarePen, Users } from '@lucide/vue'
+import { CalendarPlus2, Copy, CopyCheck, Ellipsis, Eraser, Flame, Folder as FolderIcon, FolderInput, Hourglass, Link as LinkIcon, MousePointerClick, QrCode, ShieldAlert, SquarePen, Users } from '@lucide/vue'
 import { useClipboard, useMediaQuery } from '@vueuse/core'
 import { parseURL } from 'ufo'
 import { toast } from 'vue-sonner'
@@ -83,6 +83,32 @@ const tags = computed(() => props.link.tags ?? [])
 const visibleTags = computed(() => tags.value.slice(0, 2))
 const hiddenTagCount = computed(() => Math.max(0, tags.value.length - visibleTags.value.length))
 
+const foldersStore = useDashboardFoldersStore()
+const linksStore = useDashboardLinksStore()
+const { activeDrag, startDrag, endDrag } = useFolderDragDrop()
+
+const isDragging = computed(() => activeDrag.value?.kind === 'link' && activeDrag.value.slug === props.link.slug)
+// Redundant while browsing a single folder, so it only shows in unscoped views.
+const folderLabel = computed(() => linksStore.folder ? '' : foldersStore.pathLabel(props.link.folderId ?? undefined))
+
+function handleDragStart(event: DragEvent) {
+  startDrag(event, { kind: 'link', slug: props.link.slug })
+}
+
+function handleDragEnd() {
+  endDrag()
+}
+
+function openMoveDialog() {
+  foldersStore.openMoveLinkDialog([props.link.slug])
+  editPopoverOpen.value = false
+}
+
+function openFolder() {
+  if (props.link.folderId)
+    linksStore.folder = props.link.folderId
+}
+
 const { copy, copied } = useClipboard({ source: shortLink.value, copiedDuring: 400 })
 
 function copyLink() {
@@ -92,7 +118,17 @@ function copyLink() {
 </script>
 
 <template>
-  <Card size="sm" class="relative isolate h-full min-w-0">
+  <Card
+    size="sm"
+    class="
+      relative isolate h-full min-w-0 transition-opacity
+      active:cursor-grabbing
+    "
+    :class="isDragging && 'opacity-40'"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
+  >
     <CardContent
       class="flex h-full min-w-0 flex-1 flex-col gap-3"
     >
@@ -123,6 +159,7 @@ function copyLink() {
                 <Tooltip>
                   <TooltipTrigger as-child>
                     <NuxtLink
+                      draggable="false"
                       class="
                         min-w-0 truncate rounded-md leading-5 font-bold
                         outline-none
@@ -150,6 +187,7 @@ function copyLink() {
               </TooltipProvider>
               <NuxtLink
                 v-else
+                draggable="false"
                 class="
                   min-w-0 truncate rounded-md leading-5 font-bold outline-none
                   group-hover:underline group-hover:underline-offset-4
@@ -267,6 +305,13 @@ function copyLink() {
                 {{ $t('common.edit') }}
               </DropdownMenuItem>
 
+              <DropdownMenuItem
+                @select="openMoveDialog"
+              >
+                <FolderInput aria-hidden="true" />
+                {{ $t('links.folders.move_link') }}
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
@@ -330,7 +375,7 @@ function copyLink() {
           <span class="min-w-0 truncate">{{ link.url }}</span>
         </div>
         <div
-          v-if="tags.length || countersMap"
+          v-if="tags.length || countersMap || folderLabel"
           class="flex h-5 w-full min-w-0 items-center gap-2 text-sm"
         >
           <div
@@ -376,6 +421,24 @@ function copyLink() {
             </template>
             <Skeleton v-else class="h-5 w-28 rounded-full bg-secondary" />
           </div>
+          <button
+            v-if="folderLabel"
+            type="button"
+            class="
+              relative z-20 flex min-w-0 shrink items-center gap-1 rounded-full
+              border border-border px-2 text-xs text-muted-foreground
+              transition-colors
+              hover:border-foreground/25 hover:text-foreground
+              focus-visible:ring-2 focus-visible:ring-ring/50
+              focus-visible:outline-none
+            "
+            :aria-label="`Show links in ${folderLabel}`"
+            @click="openFolder"
+          >
+            <FolderIcon aria-hidden="true" class="size-3 shrink-0" />
+            <span class="truncate">{{ folderLabel }}</span>
+          </button>
+
           <div
             v-if="tags.length"
             class="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1"

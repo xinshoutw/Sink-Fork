@@ -15,6 +15,7 @@ describe('link form values', () => {
       slug: '',
       comment: '',
       tags: [],
+      folderId: null,
       expiration: undefined,
       google: '',
       apple: '',

@@ -52,6 +52,8 @@ export interface LinksQueryState {
   status: DashboardLinkStatusQuery
   sort: DashboardLinkSort
   tag?: string
+  /** Folder id, `UNCATEGORIZED_FOLDER` for links outside every folder, or undefined for all links. */
+  folder?: string
 }
 
 export interface DashboardSlugFilters {
@@ -176,10 +178,12 @@ export function serializeRealtimeQuery(state: RealtimeQueryState): DashboardQuer
 
 export function parseLinksQuery(query: DashboardQuery): LinksQueryState {
   const tag = firstQueryValue(query.tag)?.trim().toLowerCase()
+  const folder = firstQueryValue(query.folder)?.trim()
   return {
     status: enumValue(query.status, LINK_STATUSES) ?? DEFAULT_LINK_STATUS,
     sort: enumValue(query.sort, LINK_SORTS) ?? DEFAULT_LINK_SORT,
     tag: tag && tag.length <= 32 ? tag : undefined,
+    folder: folder && folder.length <= 26 ? folder : undefined,
   }
 }
 
@@ -191,6 +195,8 @@ export function serializeLinksQuery(state: LinksQueryState): DashboardQueryOutpu
     query.sort = state.sort
   if (state.tag)
     query.tag = state.tag
+  if (state.folder)
+    query.folder = state.folder
   return query
 }
 

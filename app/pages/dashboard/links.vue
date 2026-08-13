@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AlertCircle, Database, Loader } from '@lucide/vue'
+import { UNCATEGORIZED_FOLDER } from '#shared/schemas/folder'
 
 definePageMeta({
   layout: 'dashboard',
@@ -8,6 +9,11 @@ definePageMeta({
 const migration = useLinkMigration()
 const linksStore = useDashboardLinksStore()
 useDashboardLinksRouteState()
+
+// Creating a link while browsing a folder should land it in that folder.
+const newLinkDefaults = computed(() => ({
+  folderId: linksStore.folder && linksStore.folder !== UNCATEGORIZED_FOLDER ? linksStore.folder : null,
+}))
 
 onMounted(() => {
   migration.autoMigration()
@@ -22,9 +28,14 @@ onMounted(() => {
       </h1>
       <Teleport to="#dashboard-header-actions" defer>
         <DashboardLinksSearchDialog />
-        <DashboardLinksEditorModal />
+        <DashboardLinksEditorModal :link="newLinkDefaults" />
       </Teleport>
 
+      <DashboardFoldersFolderFormDialog />
+      <DashboardFoldersFolderDeleteDialog />
+      <DashboardFoldersMoveLinkDialog />
+
+      <DashboardFoldersFolderHeader />
       <DashboardLinksFilters />
       <TabsContent value="active">
         <DashboardLinks />

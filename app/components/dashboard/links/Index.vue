@@ -3,6 +3,7 @@ import type { LinkUpdateType } from '@/types'
 import type { DashboardLink, DashboardLinkListResponse } from '@/types/dashboard-links'
 import { AlertCircle, Inbox, LoaderCircle } from '@lucide/vue'
 import { useInfiniteScroll } from '@vueuse/core'
+import { UNCATEGORIZED_FOLDER } from '#shared/schemas/folder'
 
 const linksStore = useDashboardLinksStore()
 
@@ -41,6 +42,7 @@ async function getLinks() {
         sort: linksStore.sortBy,
         status: linksStore.status,
         tag: linksStore.tag,
+        folder: linksStore.folder,
       },
     })
 
@@ -93,14 +95,23 @@ useInfiniteScroll(
 )
 
 watch(
-  [() => linksStore.sortBy, () => linksStore.status, () => linksStore.tag],
+  [() => linksStore.sortBy, () => linksStore.status, () => linksStore.tag, () => linksStore.folder],
   resetAndLoad,
 )
+
+function matchesFolderFilter(link: DashboardLink) {
+  if (!linksStore.folder)
+    return true
+  if (linksStore.folder === UNCATEGORIZED_FOLDER)
+    return !link.folderId
+  return link.folderId === linksStore.folder
+}
 
 function matchesCurrentFilters(link: DashboardLink) {
   const isExpired = Boolean(link.expiration && link.expiration <= Math.floor(Date.now() / 1000))
   return (linksStore.status === 'expired') === isExpired
     && (!linksStore.tag || link.tags?.includes(linksStore.tag))
+    && matchesFolderFilter(link)
 }
 
 function updateLinkList(link: DashboardLink, type: LinkUpdateType) {
@@ -132,6 +143,8 @@ function updateLinkList(link: DashboardLink, type: LinkUpdateType) {
 linksStore.onLinkUpdate(({ link, type }) => {
   updateLinkList(link, type)
 })
+
+linksStore.onLinksRefresh(resetAndLoad)
 </script>
 
 <template>

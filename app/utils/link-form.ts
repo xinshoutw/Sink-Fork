@@ -8,6 +8,7 @@ export function createLinkFormInitialValues(link: Partial<DashboardLink>): Dashb
     slug: link.slug ?? '',
     comment: link.comment ?? '',
     tags: link.tags ?? [],
+    folderId: link.folderId ?? null,
     expiration: link.expiration ? unix2date(link.expiration) : undefined,
     google: link.google ?? '',
     apple: link.apple ?? '',
@@ -40,6 +41,8 @@ export function normalizeLinkFormSubmitPayload(value: DashboardLinkFormData, isE
     slug: value.slug,
     comment: value.comment || undefined,
     tags: value.tags,
+    // Always sent, including null, so clearing the folder in the editor sticks.
+    folderId: value.folderId ?? null,
     expiration: value.expiration ? date2unix(value.expiration, 'end') : undefined,
     google: value.google || undefined,
     apple: value.apple || undefined,
