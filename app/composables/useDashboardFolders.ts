@@ -47,9 +47,14 @@ function flattenTree(nodes: FolderNode[]): FolderNode[] {
   return nodes.flatMap(node => [node, ...flattenTree(node.children)])
 }
 
+const FOLDERS_CACHE_KEY = 'folders'
+
 export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
-  const flat = shallowRef<FolderWithCount[]>([])
-  const uncategorizedCount = shallowRef(0)
+  // Seed from the last response so the tree paints with the sidebar instead of
+  // appearing once the request lands.
+  const cached = readDashboardCache<FolderListResponse>(FOLDERS_CACHE_KEY)
+  const flat = shallowRef<FolderWithCount[]>(cached?.folders ?? [])
+  const uncategorizedCount = shallowRef(cached?.uncategorizedCount ?? 0)
   const loading = shallowRef(false)
   const error = shallowRef(false)
   let requestGeneration = 0
@@ -90,6 +95,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
         return
       flat.value = data.folders
       uncategorizedCount.value = data.uncategorizedCount
+      writeDashboardCache(FOLDERS_CACHE_KEY, data)
     }
     catch (cause) {
       if (generation !== requestGeneration)

@@ -50,8 +50,16 @@ async function getLinks() {
       return
 
     const newLinks = data.links.filter(Boolean)
-    const existingSlugs = new Set(links.value.map(link => link.slug))
-    links.value = links.value.concat(newLinks.filter(link => !existingSlugs.has(link.slug)))
+    if (!requestCursor) {
+      // The first page replaces whatever the cache painted, so links deleted or
+      // moved elsewhere since it was written do not linger.
+      links.value = newLinks
+      writeDashboardCache(cacheKey(), newLinks)
+    }
+    else {
+      const existingSlugs = new Set(links.value.map(link => link.slug))
+      links.value = links.value.concat(newLinks.filter(link => !existingSlugs.has(link.slug)))
+    }
     cursor = data.cursor
     listComplete.value = data.list_complete
     listError.value = false
@@ -71,14 +79,26 @@ async function getLinks() {
   }
 }
 
+/** One cache entry per filter combination, since each yields a different page. */
+function cacheKey() {
+  return `links:${linksStore.sortBy}:${linksStore.status}:${linksStore.tag ?? ''}:${linksStore.folder ?? ''}`
+}
+
 function resetAndLoad() {
   requestGeneration++
-  links.value = []
   resetCounters()
   cursor = ''
   listComplete.value = false
   listError.value = false
   listLoading.value = false
+
+  // Paint the last page seen for these filters right away, then revalidate.
+  // The cursor stays empty so getLinks() refetches page one and replaces it.
+  const cached = readDashboardCache<DashboardLink[]>(cacheKey())
+  links.value = cached ?? []
+  if (cached?.length)
+    void fetchCounters(cached.map(link => link.id))
+
   void getLinks()
 }
 
@@ -142,9 +162,17 @@ function updateLinkList(link: DashboardLink, type: LinkUpdateType) {
 
 linksStore.onLinkUpdate(({ link, type }) => {
   updateLinkList(link, type)
+  // Keep the cache in step so navigating away and back does not briefly show
+  // the link as it was before this edit.
+  writeDashboardCache(cacheKey(), links.value.slice(0, limit))
 })
 
-linksStore.onLinksRefresh(resetAndLoad)
+linksStore.onLinksRefresh(() => {
+  // A bulk change such as a folder move can touch links on pages this client
+  // never loaded, so every cached page is suspect.
+  clearDashboardCache()
+  resetAndLoad()
+})
 </script>
 
 <template>

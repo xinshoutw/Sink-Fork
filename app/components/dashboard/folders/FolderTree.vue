@@ -60,10 +60,9 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
     <SidebarGroupContent>
       <SidebarMenu>
         <!--
-          All links is a scope rather than a container, so it reads as a distinct
-          band: an inset icon tile, a small caps label, and a rule below it.
-          Uncategorized holds links like any folder, so it renders as a folder
-          row and is pinned to the top of the list.
+          All links is a scope rather than a container, so it carries a heavier
+          label and a rule below it. Uncategorized holds links like any folder,
+          so it renders as a folder row pinned to the top of the list.
         -->
         <SidebarMenuItem>
           <SidebarMenuButton
@@ -76,21 +75,10 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             "
             @click="folders.openFolder(undefined)"
           >
-            <!-- Matches the chevron column on folder rows so labels align. -->
+            <!-- Same slots as a folder row; only the weight and rule set it apart. -->
             <span class="size-5 shrink-0" aria-hidden="true" />
-            <span
-              class="
-                flex size-5 shrink-0 items-center justify-center rounded-md
-                bg-sidebar-border/70 text-sidebar-foreground
-                [&>svg]:size-3
-              "
-              aria-hidden="true"
-            >
-              <Layers />
-            </span>
-            <span
-              class="truncate text-xs font-semibold tracking-wide uppercase"
-            >{{ $t('links.folders.all_links') }}</span>
+            <Layers aria-hidden="true" />
+            <span class="truncate font-medium">{{ $t('links.folders.all_links') }}</span>
           </SidebarMenuButton>
           <SidebarMenuBadge class="right-8">
             {{ folders.totalCount }}

@@ -14,7 +14,10 @@ const isCurrent = computed(() => linksStore.folder === props.node.id)
 
 // Depth is expressed as content indentation instead of nested lists, so every
 // row keeps the same right edge and the count and action column stay aligned.
-const indent = computed(() => `${props.node.depth * 0.875}rem`)
+// The base term mirrors the px-3 in sidebarMenuButtonVariants: this sets
+// padding rather than adding to it, so leaving it out would pull depth-0 rows
+// out of line with every other row in the sidebar.
+const indent = computed(() => `calc(0.75rem + ${props.node.depth * 0.875}rem)`)
 
 // Rows are siblings rather than nested, so a drop target never overlaps another.
 // The counter is still needed because dragenter and dragleave also fire for the
