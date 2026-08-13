@@ -150,6 +150,7 @@
       "new": "Nouveau dossier",
       "new_subfolder": "Nouveau sous-dossier",
       "loading": "Chargement des dossiers…",
+      "empty": "Aucun dossier pour l’instant.",
       "breadcrumb_label": "Chemin du dossier",
       "create_title": "Nouveau dossier",
       "create_description": "Les dossiers regroupent les liens. Un lien appartient à un seul dossier à la fois.",

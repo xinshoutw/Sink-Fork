@@ -150,6 +150,7 @@
       "new": "新增資料夾",
       "new_subfolder": "新增子資料夾",
       "loading": "正在載入資料夾…",
+      "empty": "還沒有資料夾。",
       "breadcrumb_label": "資料夾路徑",
       "create_title": "新增資料夾",
       "create_description": "資料夾用來整理連結。每個連結同時只能屬於一個資料夾。",

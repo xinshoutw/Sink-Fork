@@ -150,6 +150,7 @@
       "new": "Nova pasta",
       "new_subfolder": "Nova subpasta",
       "loading": "A carregar pastas…",
+      "empty": "Ainda não há pastas.",
       "breadcrumb_label": "Caminho da pasta",
       "create_title": "Nova pasta",
       "create_description": "As pastas agrupam ligações. Cada ligação pertence a uma única pasta.",

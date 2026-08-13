@@ -1,5 +1,6 @@
 import type { CreateFolderInput, EditFolderInput, Folder, FolderWithCount } from '#shared/schemas/folder'
 import { useStorage } from '@vueuse/core'
+import { serializeLinksQuery } from '@/utils/dashboard-query'
 
 export interface FolderNode extends FolderWithCount {
   children: FolderNode[]
@@ -114,6 +115,27 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
       : expandedIds.value.filter(item => item !== id)
   }
 
+  /**
+   * The folder tree lives in the sidebar, which is present on every dashboard
+   * page, so selecting a folder has to navigate to the link list rather than
+   * only mutate the store. Navigating with the query also covers the case where
+   * the list is already open, because the route watcher applies it back.
+   *
+   * `folder` is a folder id, `UNCATEGORIZED_FOLDER`, or undefined for all links.
+   */
+  async function openFolder(folder?: string): Promise<void> {
+    const links = useDashboardLinksStore()
+    await navigateTo({
+      path: '/dashboard/links',
+      query: serializeLinksQuery({
+        status: links.status,
+        sort: links.sortBy,
+        tag: links.tag,
+        folder,
+      }),
+    })
+  }
+
   /** Ancestors of `id`, outermost first, including the folder itself. */
   function breadcrumb(id: string | undefined): FolderNode[] {
     const path: FolderNode[] = []
@@ -212,6 +234,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     isExpanded,
     setExpanded,
     fetchFolders,
+    openFolder,
     breadcrumb,
     pathLabel,
     isDescendant,

@@ -150,6 +150,7 @@
       "new": "New folder",
       "new_subfolder": "New subfolder",
       "loading": "Loading folders…",
+      "empty": "No folders yet.",
       "breadcrumb_label": "Folder path",
       "create_title": "New folder",
       "create_description": "Folders group links. A link belongs to one folder at a time.",

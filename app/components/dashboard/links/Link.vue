@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import type { DashboardLink } from '@/types/dashboard-links'
-import { CalendarPlus2, Copy, CopyCheck, Ellipsis, Eraser, Flame, Folder as FolderIcon, FolderInput, Hourglass, Link as LinkIcon, MousePointerClick, QrCode, ShieldAlert, SquarePen, Users } from '@lucide/vue'
+import { CalendarPlus2, ChartArea, Copy, CopyCheck, Ellipsis, Eraser, Flame, Folder as FolderIcon, FolderInput, Hourglass, MousePointerClick, QrCode, ShieldAlert, SquarePen, Users } from '@lucide/vue'
 import { useClipboard, useMediaQuery } from '@vueuse/core'
 import { parseURL } from 'ufo'
 import { toast } from 'vue-sonner'
@@ -158,8 +158,11 @@ function copyLink() {
               <TooltipProvider v-if="noteText">
                 <Tooltip>
                   <TooltipTrigger as-child>
-                    <NuxtLink
+                    <a
                       draggable="false"
+                      :href="link.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       class="
                         min-w-0 truncate rounded-md leading-5 font-bold
                         outline-none
@@ -169,7 +172,6 @@ function copyLink() {
                         focus-visible:after:ring-3
                         focus-visible:after:ring-ring/50
                       "
-                      :to="getDashboardLinkDetailLocation(link.slug)"
                     >
                       <span class="sm:hidden">{{ link.slug }}</span>
                       <span
@@ -178,23 +180,25 @@ function copyLink() {
                           sm:inline
                         "
                       >{{ host }}/{{ link.slug }}</span>
-                    </NuxtLink>
+                    </a>
                   </TooltipTrigger>
                   <TooltipContent class="max-w-[90svw] break-all">
                     <p>{{ noteText }}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <NuxtLink
+              <a
                 v-else
                 draggable="false"
+                :href="link.url"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="
                   min-w-0 truncate rounded-md leading-5 font-bold outline-none
                   group-hover:underline group-hover:underline-offset-4
                   after:absolute after:inset-0 after:z-10 after:rounded-2xl
                   focus-visible:after:ring-3 focus-visible:after:ring-ring/50
                 "
-                :to="getDashboardLinkDetailLocation(link.slug)"
               >
                 <span class="sm:hidden">{{ link.slug }}</span>
                 <span
@@ -203,7 +207,7 @@ function copyLink() {
                     sm:inline
                   "
                 >{{ host }}/{{ link.slug }}</span>
-              </NuxtLink>
+              </a>
               <span
                 v-if="link.unsafe"
                 role="img"
@@ -242,17 +246,6 @@ function copyLink() {
           >
             <CopyCheck v-if="copied" aria-hidden="true" class="size-4" />
             <Copy v-else aria-hidden="true" class="size-4" />
-          </Button>
-
-          <Button as-child variant="ghost" :size="isDesktop ? 'icon' : 'icon-lg'">
-            <a
-              :href="link.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              :aria-label="link.url"
-            >
-              <LinkIcon aria-hidden="true" />
-            </a>
           </Button>
 
           <Popover v-if="isDesktop">
@@ -296,6 +289,17 @@ function copyLink() {
               >
                 <QrCode aria-hidden="true" />
                 {{ $t('links.download_qr_code') }}
+              </DropdownMenuItem>
+
+              <!--
+                The card title now opens the destination URL, so this is the
+                remaining way into the link's own analytics from the card.
+              -->
+              <DropdownMenuItem as-child>
+                <NuxtLink :to="getDashboardLinkDetailLocation(link.slug)">
+                  <ChartArea aria-hidden="true" />
+                  {{ $t('nav.analysis') }}
+                </NuxtLink>
               </DropdownMenuItem>
 
               <DropdownMenuItem

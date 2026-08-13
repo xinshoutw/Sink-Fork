@@ -150,6 +150,7 @@
       "new": "Neuer Ordner",
       "new_subfolder": "Neuer Unterordner",
       "loading": "Ordner werden geladen…",
+      "empty": "Noch keine Ordner.",
       "breadcrumb_label": "Ordnerpfad",
       "create_title": "Neuer Ordner",
       "create_description": "Ordner gruppieren Links. Ein Link gehört immer zu genau einem Ordner.",

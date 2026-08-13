@@ -150,6 +150,7 @@
       "new": "Nuova cartella",
       "new_subfolder": "Nuova sottocartella",
       "loading": "Caricamento cartelle…",
+      "empty": "Nessuna cartella per ora.",
       "breadcrumb_label": "Percorso cartella",
       "create_title": "Nuova cartella",
       "create_description": "Le cartelle raggruppano i link. Un link appartiene a una sola cartella alla volta.",

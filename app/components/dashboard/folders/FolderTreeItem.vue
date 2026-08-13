@@ -24,7 +24,7 @@ const isDropTarget = computed(() => dragDepth.value > 0 && canDropOn(props.node.
 const isSelfDragging = computed(() => activeDrag.value?.kind === 'folder' && activeDrag.value.id === props.node.id)
 
 function open() {
-  linksStore.folder = props.node.id
+  void folders.openFolder(props.node.id)
 }
 
 /**
@@ -95,6 +95,10 @@ async function handleDrop(event: DragEvent) {
           @dragover="handleDragOver"
           @drop="handleDrop"
         >
+          <!--
+            Both branches are exactly size-5 with no margin, so a folder with
+            children lines up with one without.
+          -->
           <span
             v-if="hasChildren"
             role="button"
@@ -102,8 +106,8 @@ async function handleDrop(event: DragEvent) {
             :aria-label="expanded ? `Collapse ${node.name}` : `Expand ${node.name}`"
             :aria-expanded="expanded"
             class="
-              -m-1 flex size-5 shrink-0 items-center justify-center rounded-md
-              p-1 transition-colors
+              flex size-5 shrink-0 items-center justify-center rounded-md
+              transition-colors
               hover:bg-sidebar-border
             "
             @click.stop="toggle"

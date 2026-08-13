@@ -150,6 +150,7 @@
       "new": "새 폴더",
       "new_subfolder": "새 하위 폴더",
       "loading": "폴더 불러오는 중…",
+      "empty": "아직 폴더가 없습니다.",
       "breadcrumb_label": "폴더 경로",
       "create_title": "새 폴더",
       "create_description": "폴더는 링크를 묶어 줍니다. 링크는 한 번에 하나의 폴더에만 속합니다.",

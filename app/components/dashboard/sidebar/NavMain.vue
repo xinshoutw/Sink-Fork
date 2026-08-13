@@ -50,6 +50,9 @@ watch(() => route.path, () => {
     </SidebarMenu>
   </SidebarGroup>
 
+  <!-- Groups that belong between navigation and settings, such as folders. -->
+  <slot />
+
   <SidebarGroup>
     <SidebarGroupLabel>{{ $t('sidebar.settings') }}</SidebarGroupLabel>
     <SidebarMenu>

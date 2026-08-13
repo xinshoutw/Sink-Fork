@@ -150,6 +150,7 @@
       "new": "Thư mục mới",
       "new_subfolder": "Thư mục con mới",
       "loading": "Đang tải thư mục…",
+      "empty": "Chưa có thư mục nào.",
       "breadcrumb_label": "Đường dẫn thư mục",
       "create_title": "Thư mục mới",
       "create_description": "Thư mục dùng để nhóm liên kết. Mỗi liên kết chỉ thuộc một thư mục.",

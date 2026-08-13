@@ -150,6 +150,7 @@
       "new": "Folder baru",
       "new_subfolder": "Subfolder baru",
       "loading": "Memuat folder…",
+      "empty": "Belum ada folder.",
       "breadcrumb_label": "Jalur folder",
       "create_title": "Folder baru",
       "create_description": "Folder mengelompokkan tautan. Satu tautan hanya berada di satu folder.",

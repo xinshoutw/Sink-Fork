@@ -150,6 +150,7 @@
       "new": "新建文件夹",
       "new_subfolder": "新建子文件夹",
       "loading": "正在加载文件夹…",
+      "empty": "还没有文件夹。",
       "breadcrumb_label": "文件夹路径",
       "create_title": "新建文件夹",
       "create_description": "文件夹用于归类链接。每个链接同时只能属于一个文件夹。",

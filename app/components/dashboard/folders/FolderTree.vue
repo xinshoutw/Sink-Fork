@@ -59,6 +59,11 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
 
     <SidebarGroupContent>
       <SidebarMenu>
+        <!--
+          The two view rows are scopes, not containers. They read as a distinct
+          band: an inset icon tile, uppercase label, and rules separating them
+          from the folders they sit around.
+        -->
         <SidebarMenuItem>
           <SidebarMenuButton
             :is-active="isAllActive"
@@ -68,23 +73,48 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
               hover:rounded-4xl
               data-active:rounded-4xl
             "
-            @click="linksStore.folder = undefined"
+            @click="folders.openFolder(undefined)"
           >
-            <!-- Matches the chevron slot on folder rows so every icon lines up. -->
+            <!-- Matches the chevron column on folder rows so labels align. -->
             <span class="size-5 shrink-0" aria-hidden="true" />
-            <Layers aria-hidden="true" />
-            <span class="truncate">{{ $t('links.folders.all_links') }}</span>
+            <span
+              class="
+                flex size-5 shrink-0 items-center justify-center rounded-md
+                bg-sidebar-border/70 text-sidebar-foreground
+                [&>svg]:size-3
+              "
+              aria-hidden="true"
+            >
+              <Layers />
+            </span>
+            <span
+              class="truncate text-xs font-semibold tracking-wide uppercase"
+            >{{ $t('links.folders.all_links') }}</span>
           </SidebarMenuButton>
           <SidebarMenuBadge class="right-8">
             {{ folders.totalCount }}
           </SidebarMenuBadge>
         </SidebarMenuItem>
 
+        <SidebarSeparator class="mx-2 my-1" />
+
         <DashboardFoldersFolderTreeItem
           v-for="node in folders.visibleNodes"
           :key="node.id"
           :node="node"
         />
+
+        <SidebarMenuItem
+          v-if="!folders.visibleNodes.length && !folders.loading" class="
+            px-2 py-1
+          "
+        >
+          <p class="text-xs text-sidebar-foreground/60">
+            {{ $t('links.folders.empty') }}
+          </p>
+        </SidebarMenuItem>
+
+        <SidebarSeparator class="mx-2 my-1" />
 
         <SidebarMenuItem>
           <SidebarMenuButton
@@ -98,15 +128,27 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
               data-active:rounded-4xl
             "
             :data-drop="isRootDropTarget || undefined"
-            @click="linksStore.folder = UNCATEGORIZED_FOLDER"
+            @click="folders.openFolder(UNCATEGORIZED_FOLDER)"
             @dragenter="activeDrag && (dragDepth += 1)"
             @dragleave="dragDepth = Math.max(0, dragDepth - 1)"
             @dragover="handleRootDragOver"
             @drop="handleRootDrop"
           >
+            <!-- Matches the chevron column on folder rows so labels align. -->
             <span class="size-5 shrink-0" aria-hidden="true" />
-            <Inbox aria-hidden="true" />
-            <span class="truncate">{{ $t('links.folders.uncategorized') }}</span>
+            <span
+              class="
+                flex size-5 shrink-0 items-center justify-center rounded-md
+                bg-sidebar-border/70 text-sidebar-foreground
+                [&>svg]:size-3
+              "
+              aria-hidden="true"
+            >
+              <Inbox />
+            </span>
+            <span
+              class="truncate text-xs font-semibold tracking-wide uppercase"
+            >{{ $t('links.folders.uncategorized') }}</span>
           </SidebarMenuButton>
           <SidebarMenuBadge class="right-8">
             {{ folders.uncategorizedCount }}
