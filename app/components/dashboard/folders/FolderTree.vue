@@ -60,9 +60,10 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
     <SidebarGroupContent>
       <SidebarMenu>
         <!--
-          The two view rows are scopes, not containers. They read as a distinct
-          band: an inset icon tile, uppercase label, and rules separating them
-          from the folders they sit around.
+          All links is a scope rather than a container, so it reads as a distinct
+          band: an inset icon tile, a small caps label, and a rule below it.
+          Uncategorized holds links like any folder, so it renders as a folder
+          row and is pinned to the top of the list.
         -->
         <SidebarMenuItem>
           <SidebarMenuButton
@@ -98,24 +99,6 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
 
         <SidebarSeparator class="mx-2 my-1" />
 
-        <DashboardFoldersFolderTreeItem
-          v-for="node in folders.visibleNodes"
-          :key="node.id"
-          :node="node"
-        />
-
-        <SidebarMenuItem
-          v-if="!folders.visibleNodes.length && !folders.loading" class="
-            px-2 py-1
-          "
-        >
-          <p class="text-xs text-sidebar-foreground/60">
-            {{ $t('links.folders.empty') }}
-          </p>
-        </SidebarMenuItem>
-
-        <SidebarSeparator class="mx-2 my-1" />
-
         <SidebarMenuItem>
           <SidebarMenuButton
             :is-active="isUncategorizedActive"
@@ -134,25 +117,30 @@ linksStore.onLinkUpdate(() => void folders.fetchFolders())
             @dragover="handleRootDragOver"
             @drop="handleRootDrop"
           >
-            <!-- Matches the chevron column on folder rows so labels align. -->
+            <!-- Same slots as a root folder row: chevron column, icon, label. -->
             <span class="size-5 shrink-0" aria-hidden="true" />
-            <span
-              class="
-                flex size-5 shrink-0 items-center justify-center rounded-md
-                bg-sidebar-border/70 text-sidebar-foreground
-                [&>svg]:size-3
-              "
-              aria-hidden="true"
-            >
-              <Inbox />
-            </span>
-            <span
-              class="truncate text-xs font-semibold tracking-wide uppercase"
-            >{{ $t('links.folders.uncategorized') }}</span>
+            <Inbox aria-hidden="true" />
+            <span class="truncate">{{ $t('links.folders.uncategorized') }}</span>
           </SidebarMenuButton>
           <SidebarMenuBadge class="right-8">
             {{ folders.uncategorizedCount }}
           </SidebarMenuBadge>
+        </SidebarMenuItem>
+
+        <DashboardFoldersFolderTreeItem
+          v-for="node in folders.visibleNodes"
+          :key="node.id"
+          :node="node"
+        />
+
+        <SidebarMenuItem
+          v-if="!folders.visibleNodes.length && !folders.loading" class="
+            px-2 py-1
+          "
+        >
+          <p class="text-xs text-sidebar-foreground/60">
+            {{ $t('links.folders.empty') }}
+          </p>
         </SidebarMenuItem>
 
         <SidebarMenuItem v-if="folders.loading && !folders.flat.length">
