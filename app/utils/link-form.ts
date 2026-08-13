@@ -23,7 +23,17 @@ export function createLinkFormInitialValues(link: Partial<DashboardLink>): Dashb
   }
 }
 
-export function normalizeLinkFormSubmitPayload(value: DashboardLinkFormData, isEdit: boolean) {
+/**
+ * `originalFolderId` is the value the form was seeded with. On edit, an
+ * unchanged folder is omitted rather than resent: the form can be seeded from a
+ * cached card, and resending a stale value would silently undo a move made since
+ * that cache was written. The server preserves folderId when it is absent.
+ */
+export function normalizeLinkFormSubmitPayload(
+  value: DashboardLinkFormData,
+  isEdit: boolean,
+  originalFolderId?: string | null,
+) {
   const geo: Record<string, string> = {}
   value.geo?.forEach((route) => {
     const country = route.country.trim().toUpperCase()
@@ -41,8 +51,10 @@ export function normalizeLinkFormSubmitPayload(value: DashboardLinkFormData, isE
     slug: value.slug,
     comment: value.comment || undefined,
     tags: value.tags,
-    // Always sent, including null, so clearing the folder in the editor sticks.
-    folderId: value.folderId ?? null,
+    ...(isEdit && (value.folderId ?? null) === (originalFolderId ?? null)
+      ? {}
+      // null is sent explicitly so clearing the folder in the editor sticks.
+      : { folderId: value.folderId ?? null }),
     expiration: value.expiration ? date2unix(value.expiration, 'end') : undefined,
     google: value.google || undefined,
     apple: value.apple || undefined,

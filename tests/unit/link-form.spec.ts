@@ -56,6 +56,20 @@ describe('link form submit payload', () => {
     }
   }
 
+  it('omits an unchanged folder on edit so a stale form cannot undo a move', () => {
+    const unchanged = normalizeLinkFormSubmitPayload(formValues({ folderId: 'work' }), true, 'work')
+    expect('folderId' in unchanged, 'an unchanged folder must not be resent').toBe(false)
+
+    const changed = normalizeLinkFormSubmitPayload(formValues({ folderId: 'clients' }), true, 'work')
+    expect(changed.folderId).toBe('clients')
+
+    const cleared = normalizeLinkFormSubmitPayload(formValues({ folderId: null }), true, 'work')
+    expect(cleared.folderId, 'clearing the folder must still be sent explicitly').toBe(null)
+
+    const created = normalizeLinkFormSubmitPayload(formValues({ folderId: null }), false)
+    expect(created.folderId, 'create always carries the field').toBe(null)
+  })
+
   it('preserves an edited masked password by submitting undefined', () => {
     const payload = normalizeLinkFormSubmitPayload(formValues({
       password: `${LINK_PASSWORD_MASK_PREFIX}•••ret`,

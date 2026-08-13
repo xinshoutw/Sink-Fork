@@ -36,7 +36,7 @@ const form = useForm({
   defaultValues,
   onSubmit: async ({ value }) => {
     try {
-      const linkData = normalizeLinkFormSubmitPayload(value, props.isEdit)
+      const linkData = normalizeLinkFormSubmitPayload(value, props.isEdit, defaultValues.folderId)
       const { link: newLink } = await useAPI<{ link: DashboardLink }>(
         props.isEdit ? '/api/link/edit' : '/api/link/create',
         {
