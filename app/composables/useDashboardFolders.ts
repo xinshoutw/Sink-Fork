@@ -1,5 +1,5 @@
 import type { CreateFolderInput, EditFolderInput, Folder, FolderWithCount } from '#shared/schemas/folder'
-import { useSessionStorage } from '@vueuse/core'
+import { useDebounceFn, useSessionStorage } from '@vueuse/core'
 import { serializeLinksQuery } from '@/utils/dashboard-query'
 
 export interface FolderNode extends FolderWithCount {
@@ -111,6 +111,13 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     }
   }
 
+  /**
+   * Collapses a burst of changes into one request. Dragging links one at a time
+   * is the only way to move several, since there is no multi-select, so this is
+   * the common path rather than an edge case.
+   */
+  const scheduleFoldersRefresh = useDebounceFn(() => void fetchFolders(), 500, { maxWait: 2000 })
+
   function isExpanded(id: string): boolean {
     return expandedIds.value.includes(id)
   }
@@ -178,6 +185,11 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     return folder
   }
 
+  /** Exposed so the layout can reconcile counts without a request per link edit. */
+  function refreshFoldersSoon(): void {
+    void scheduleFoldersRefresh()
+  }
+
   async function updateFolder(input: EditFolderInput): Promise<Folder> {
     const folder = await useAPI<Folder>('/api/folder/edit', { method: 'PUT', body: input })
     await fetchFolders()
@@ -191,14 +203,45 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     useDashboardLinksStore().requestLinksRefresh()
   }
 
-  async function moveLinks(slugs: string[], folderId: string | null): Promise<string[]> {
+  /**
+   * `fromFolderId` lets the badges move with the drop instead of waiting on the
+   * reconciling fetch. Nothing here reloads the link list: a reload would reset
+   * it to page one between two consecutive drags, so the list patches the moved
+   * rows in place from the event below.
+   */
+  async function moveLinks(slugs: string[], folderId: string | null, fromFolderId?: string | null): Promise<string[]> {
     const { moved } = await useAPI<{ moved: string[] }>('/api/link/move', {
       method: 'PUT',
       body: { slugs, folderId },
     })
-    await fetchFolders()
-    useDashboardLinksStore().requestLinksRefresh()
+
+    if (fromFolderId !== undefined)
+      applyLocalMove(moved.length, fromFolderId, folderId)
+    scheduleFoldersRefresh()
+    useDashboardLinksStore().notifyLinksMoved({ slugs: moved, folderId })
     return moved
+  }
+
+  /**
+   * Moves the counts immediately so a drop reads as done. The debounced fetch
+   * that follows is the source of truth and corrects any drift.
+   */
+  function applyLocalMove(count: number, fromFolderId: string | null, toFolderId: string | null): void {
+    if (!count || fromFolderId === toFolderId)
+      return
+
+    flat.value = flat.value.map((folder) => {
+      if (folder.id === fromFolderId)
+        return { ...folder, linkCount: Math.max(0, folder.linkCount - count) }
+      if (folder.id === toFolderId)
+        return { ...folder, linkCount: folder.linkCount + count }
+      return folder
+    })
+
+    if (fromFolderId === null)
+      uncategorizedCount.value = Math.max(0, uncategorizedCount.value - count)
+    if (toFolderId === null)
+      uncategorizedCount.value += count
   }
 
   // Dialog plumbing lives here so the sidebar tree, the link cards and the
@@ -256,6 +299,7 @@ export const useDashboardFoldersStore = defineStore('dashboard-folders', () => {
     isExpanded,
     setExpanded,
     fetchFolders,
+    refreshFoldersSoon,
     openFolder,
     breadcrumb,
     pathLabel,

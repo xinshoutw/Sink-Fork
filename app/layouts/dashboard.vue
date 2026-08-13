@@ -16,8 +16,9 @@ watch(migration.completed, (completed) => {
     void foldersStore.fetchFolders()
 }, { immediate: true })
 
-// Folder counts shift whenever a link is created, edited or deleted.
-linksStore.onLinkUpdate(() => void foldersStore.fetchFolders())
+// Folder counts shift whenever a link is created, edited or deleted. Debounced,
+// so a burst of edits reconciles once instead of issuing a request each time.
+linksStore.onLinkUpdate(() => foldersStore.refreshFoldersSoon())
 
 const scrollContainer = ref<HTMLElement | null>(null)
 const { y } = useScroll(scrollContainer)

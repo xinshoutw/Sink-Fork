@@ -10,6 +10,11 @@ export interface LinkUpdateEvent {
   type: LinkUpdateType
 }
 
+export interface LinksMovedEvent {
+  slugs: string[]
+  folderId: string | null
+}
+
 export const useDashboardLinksStore = defineStore('dashboard-links', () => {
   const sortBy = ref<DashboardLinkSort>('newest')
   const status = ref<DashboardLinkStatus>('active')
@@ -24,6 +29,9 @@ export const useDashboardLinksStore = defineStore('dashboard-links', () => {
   // Bulk changes such as folder moves affect links the client may not have
   // loaded, so they ask for a reload instead of patching individual rows.
   const linksRefreshHook = createEventHook<void>()
+  // Moves are patched in place instead: a reload would reset the list to page
+  // one and lose the scroll position between two consecutive drags.
+  const linksMovedHook = createEventHook<LinksMovedEvent>()
 
   function openLinkEditor(link?: Record<string, unknown>) {
     editingLink.value = link || null
@@ -47,6 +55,16 @@ export const useDashboardLinksStore = defineStore('dashboard-links', () => {
 
   function requestLinksRefresh() {
     linksRefreshHook.trigger()
+  }
+
+  function notifyLinksMoved(event: LinksMovedEvent) {
+    linksMovedHook.trigger(event)
+  }
+
+  function onLinksMoved(callback: (event: LinksMovedEvent) => void) {
+    const { off } = linksMovedHook.on(callback)
+    tryOnScopeDispose(off)
+    return off
   }
 
   function onLinksRefresh(callback: () => void) {
@@ -75,6 +93,8 @@ export const useDashboardLinksStore = defineStore('dashboard-links', () => {
     onLinkUpdate,
     requestLinksRefresh,
     onLinksRefresh,
+    notifyLinksMoved,
+    onLinksMoved,
     applyRouteState,
   }
 })

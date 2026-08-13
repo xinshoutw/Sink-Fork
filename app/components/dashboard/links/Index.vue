@@ -174,11 +174,43 @@ linksStore.onLinkUpdate(({ link, type }) => {
 })
 
 linksStore.onLinksRefresh(() => {
-  // A bulk change such as a folder move can touch links on pages this client
+  // A bulk change such as a folder delete can touch links on pages this client
   // never loaded, so every cached list page is suspect. The folder entry is left
   // alone: the folders store has just refreshed and rewritten it.
   clearDashboardCache('links:')
   resetAndLoad()
+})
+
+/**
+ * Moves are patched in place rather than reloaded. Without multi-select the only
+ * way to move several links is to drag them one after another, and a reload
+ * between drags would reset the list to page one and drop the scroll position,
+ * pulling the next card out from under the cursor.
+ */
+linksStore.onLinksMoved(({ slugs, folderId }) => {
+  const moved = new Set(slugs)
+  const next: DashboardLink[] = []
+  let changed = false
+
+  for (const link of links.value) {
+    if (!moved.has(link.slug)) {
+      next.push(link)
+      continue
+    }
+    changed = true
+    const updated: DashboardLink = { ...link, folderId: folderId ?? undefined }
+    // A link moved out of the folder being browsed no longer belongs in the list.
+    if (matchesFolderFilter(updated))
+      next.push(updated)
+  }
+
+  if (!changed)
+    return
+
+  links.value = next
+  // Other cached views now disagree about where these links live.
+  clearDashboardCache('links:')
+  writeDashboardCache(cacheKey(), next.slice(0, limit))
 })
 </script>
 

@@ -89,7 +89,7 @@ export function useFolderDragDrop() {
     if (payload.kind === 'link') {
       if (payload.folderId === targetFolderId)
         return null
-      await folders.moveLinks([payload.slug], targetFolderId)
+      await folders.moveLinks([payload.slug], targetFolderId, payload.folderId)
       return payload
     }
 
@@ -107,8 +107,13 @@ export function useFolderDragDrop() {
   async function applyDropWithFeedback(event: DragEvent, targetFolderId: string | null): Promise<void> {
     try {
       const payload = await applyDrop(event, targetFolderId)
-      if (payload)
-        toast(t(payload.kind === 'link' ? 'links.folders.move_link_success' : 'links.folders.move_folder_success'))
+      if (payload) {
+        // A fixed id replaces the previous toast instead of stacking one per
+        // drag, which is the normal way to move several links.
+        toast(t(payload.kind === 'link' ? 'links.folders.move_link_success' : 'links.folders.move_folder_success'), {
+          id: 'sink-folder-move',
+        })
+      }
     }
     catch (cause) {
       console.error(cause)

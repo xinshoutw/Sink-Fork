@@ -29,7 +29,7 @@ async function submit() {
 
   moving.value = true
   try {
-    await folders.moveLinks(folders.moveLinkSlugs, target.value)
+    await folders.moveLinks(folders.moveLinkSlugs, target.value, folders.moveLinkFolderId)
     toast(t('links.folders.move_link_success'))
     open.value = false
   }
